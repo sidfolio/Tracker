@@ -755,7 +755,7 @@ function renderContacts(container) {
                 
                 <div class="input-group" style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border); display:flex; gap:8px;">
                     <input type="text" id="add-${cat.key}" placeholder="${cat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; flex:1; box-sizing:border-box;">
-                    <button data-cat="${cat.key}" class="add-target-btn" style="background:var(--accent-light); color:#000; font-weight:600; border-radius:var(--radius-sm); padding:8px 16px; border:none; cursor:pointer; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
+                    <button data-cat="${cat.key}" class="add-target-btn">
                         <i class="ph ph-plus" style="font-weight:700;"></i> Add Item
                     </button>
                 </div>

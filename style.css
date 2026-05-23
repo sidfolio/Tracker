@@ -1341,5 +1341,33 @@ button.ghost:hover { background: var(--border-strong); }
     opacity: 1 !important;
 }
 .target-card-control:hover {
-    color: var(--accent-light) !important;
+    color: var(--accent) !important;
+}
+
+/* ==================== ADD ITEM SECONDARY BUTTON ==================== */
+.add-target-btn {
+    background: var(--bg-elevated) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border) !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 8px 16px !important;
+    cursor: pointer !important;
+    font-size: 0.85rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    white-space: nowrap !important;
+    transition: all var(--transition) !important;
+    font-family: inherit !important;
+}
+
+.add-target-btn:hover {
+    background: var(--border-strong) !important;
+    border-color: var(--text-muted) !important;
+    transform: translateY(-1px) !important;
+}
+
+.add-target-btn:active {
+    transform: translateY(0) !important;
 }
