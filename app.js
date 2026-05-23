@@ -685,7 +685,12 @@ function renderArchive(container) {
                         </li>`).join('')}
                 </ul>
             </div>`;
-/// ======================== COMPANIES & SOURCES ========================
+    }
+
+    container.innerHTML = html;
+}
+
+// ======================== COMPANIES & SOURCES ========================
 function getIconForLink(link) {
     if (!link) return 'ph-link';
     const l = link.toLowerCase();
