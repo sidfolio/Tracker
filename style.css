@@ -1330,6 +1330,16 @@ button.ghost:hover { background: var(--border-strong); }
     content: attr(placeholder) !important;
     color: var(--text-muted) !important;
     opacity: 0.4 !important;
-    pointer-events: none !important;
     position: absolute !important;
+}
+
+.target-card-control {
+    opacity: 0 !important;
+    transition: opacity var(--transition), color var(--transition) !important;
+}
+.target-card:hover .target-card-control {
+    opacity: 1 !important;
+}
+.target-card-control:hover {
+    color: var(--accent-light) !important;
 }

@@ -736,7 +736,12 @@ function renderContacts(container) {
                         <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
                             <div class="target-card-header">
                                 <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
-                                <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                                <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
+                                    <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
+                                    <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
+                                    <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
+                                    <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                                </div>
                             </div>
                             <div class="target-card-link-row">
                                 <i class="${getIconForLink(item.link)} target-card-link-icon"></i>
@@ -748,9 +753,9 @@ function renderContacts(container) {
                     `).join('')}
                 </div>
                 
-                <div class="input-group" style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border);">
-                    <input type="text" id="add-${cat.key}" placeholder="${cat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; width:100%; box-sizing:border-box;">
-                    <button data-cat="${cat.key}" class="add-target-btn" style="background:var(--accent-light); color:#000; font-weight:600; border-radius:var(--radius-sm); padding:8px 16px; margin-top:8px; width:100%; border:none; cursor:pointer; font-size:0.85rem;">
+                <div class="input-group" style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border); display:flex; gap:8px;">
+                    <input type="text" id="add-${cat.key}" placeholder="${cat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; flex:1; box-sizing:border-box;">
+                    <button data-cat="${cat.key}" class="add-target-btn" style="background:var(--accent-light); color:#000; font-weight:600; border-radius:var(--radius-sm); padding:8px 16px; border:none; cursor:pointer; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px; white-space:nowrap;">
                         <i class="ph ph-plus" style="font-weight:700;"></i> Add Item
                     </button>
                 </div>
@@ -788,6 +793,57 @@ function renderContacts(container) {
         }
     }, true);
 
+    // Event listeners for Card Rearrangement Controls
+    container.querySelectorAll('.pin-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+            const d = getData();
+            if (d[key] && d[key][idx]) {
+                const item = d[key].splice(idx, 1)[0];
+                d[key].unshift(item);
+                saveData(d);
+                renderContacts(container);
+                showToast(`Pinned "${item.name || 'item'}" to top.`, 'success');
+            }
+        });
+    });
+
+    container.querySelectorAll('.up-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+            if (idx > 0) {
+                const d = getData();
+                if (d[key] && d[key][idx]) {
+                    const temp = d[key][idx];
+                    d[key][idx] = d[key][idx - 1];
+                    d[key][idx - 1] = temp;
+                    saveData(d);
+                    renderContacts(container);
+                }
+            }
+        });
+    });
+
+    container.querySelectorAll('.down-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+            const d = getData();
+            if (d[key] && idx < d[key].length - 1) {
+                const temp = d[key][idx];
+                d[key][idx] = d[key][idx + 1];
+                d[key][idx + 1] = temp;
+                saveData(d);
+                renderContacts(container);
+            }
+        });
+    });
+
     // Event listeners for Delete Buttons
     container.querySelectorAll('.target-card-delete').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -806,11 +862,11 @@ function renderContacts(container) {
         });
     });
 
-    // Event listeners for Add Buttons
+    // Event listeners for Add Buttons (Defensive Sibling Fallback included)
     container.querySelectorAll('.add-target-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const cat = btn.dataset.cat;
-            const input = document.getElementById(`add-${cat}`);
+            const input = document.getElementById(`add-${cat}`) || btn.previousElementSibling;
             const val = input.value.trim();
             if (!val) return;
             const d = getData();
@@ -823,14 +879,15 @@ function renderContacts(container) {
         });
     });
 
-    // Enter Key on Inputs to Add Item
+    // Enter Key on Inputs to Add Item (Defensive Sibling Fallback included)
     container.querySelectorAll('.linear-column input').forEach(input => {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                const cat = input.id.replace('add-', '');
+                const cat = input.id ? input.id.replace('add-', '') : '';
                 const val = input.value.trim();
                 if (!val) return;
                 const d = getData();
+                if (!cat) return;
                 if (!d[cat]) d[cat] = [];
                 d[cat].push({ name: val, link: '', description: '' });
                 saveData(d);
