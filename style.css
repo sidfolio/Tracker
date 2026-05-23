@@ -1450,3 +1450,66 @@ button.ghost:hover { background: var(--border-strong); }
     color: var(--accent-hover) !important;
     text-shadow: 0 0 6px rgba(167, 139, 250, 0.3) !important;
 }
+
+/* ==================== TARGET BOARD TAB NAVIGATION ==================== */
+.board-tabs-wrapper {
+    display: flex !important;
+    background: var(--bg-surface) !important;
+    padding: 4px !important;
+    border-radius: var(--radius-md) !important;
+    border: 1px solid var(--border) !important;
+    margin-bottom: 20px !important;
+    width: fit-content !important;
+    gap: 2px !important;
+}
+
+.board-tab-btn {
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    border: none !important;
+    padding: 8px 16px !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 0.83rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    transition: all var(--transition) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    transform: none !important;
+}
+
+.board-tab-btn:hover {
+    background: var(--bg-elevated) !important;
+    color: var(--text-primary) !important;
+    transform: none !important;
+}
+
+.board-tab-btn.active {
+    background: var(--bg-card) !important;
+    color: var(--accent) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+}
+
+.board-tab-badge {
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important;
+    font-size: 0.72rem !important;
+    padding: 2px 8px !important;
+    border-radius: 20px !important;
+    font-weight: 700 !important;
+    transition: all var(--transition) !important;
+}
+
+.board-tab-btn.active .board-tab-badge {
+    background: var(--accent) !important;
+    color: #000 !important;
+}
+
+/* ==================== TARGET BOARD RESPONSIVE GRID ==================== */
+.target-cards-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 16px !important;
+    width: 100% !important;
+}

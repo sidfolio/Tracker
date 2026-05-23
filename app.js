@@ -766,27 +766,42 @@ function renderContacts(container) {
         { key: 'portals',   label: 'Job Portals',    icon: 'ph-browser',       placeholder: 'Add portal...' }
     ];
 
+    const activeKey = window._activeTargetTab || 'companies';
+    const activeCat = categories.find(c => c.key === activeKey) || categories[0];
+    const items = data[activeCat.key] || [];
+
     let html = `
         <div style="margin-bottom:24px;">
             <h2 style="font-weight:700; letter-spacing:-0.02em; margin-bottom:4px;">Target Board & Sources</h2>
             <p style="color:var(--text-secondary); font-size:0.85rem;">Manage your target companies, key outreach contacts, and job search portals in one place.</p>
         </div>
-        <div class="linear-list-board">`;
-
-    categories.forEach(cat => {
-        const items = data[cat.key] || [];
-        html += `
-            <div class="linear-column" style="display:flex; flex-direction:column; gap:16px;">
-                <div class="linear-header" style="color:var(--accent-light); margin-bottom: 0px; padding-bottom: 12px;">
-                    <i class="ph ${cat.icon}"></i> ${cat.label}
-                    <span style="margin-left:auto; font-size:0.7rem; color:var(--text-muted); font-weight:400;">${items.length} total</span>
-                </div>
-                
-                <div class="target-cards-list" id="col-${cat.key}" style="display:flex; flex-direction:column; gap:12px; min-height:50px;">
-                    ${items.map((item, idx) => {
-                        const fields = migrateFields(item, cat.key);
+        
+        <!-- BOARD TABS -->
+        <div class="board-tabs-wrapper">
+            ${categories.map(cat => {
+                const count = (data[cat.key] || []).length;
+                return `
+                    <button class="board-tab-btn ${cat.key === activeKey ? 'active' : ''}" data-tab="${cat.key}">
+                        <i class="ph ${cat.icon}"></i> ${cat.label}
+                        <span class="board-tab-badge">${count}</span>
+                    </button>
+                `;
+            }).join('')}
+        </div>
+        
+        <div class="linear-list-board" style="display:flex; flex-direction:column; gap:20px; width:100%;">
+            <div class="linear-column" style="display:flex; flex-direction:column; gap:20px; width:100%; box-sizing:border-box;">
+                <!-- CARDS GRID -->
+                <div class="target-cards-grid" id="col-${activeCat.key}">
+                    ${items.length === 0 ? `
+                        <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border: 1px dashed var(--border); border-radius: var(--radius-md);">
+                            <i class="ph ph-folder-open" style="font-size: 2rem; margin-bottom: 8px; display: block; color: var(--text-muted);"></i>
+                            No items yet. Type a name below to add your first ${activeCat.label.toLowerCase().slice(0, -1)}!
+                        </div>
+                    ` : items.map((item, idx) => {
+                        const fields = migrateFields(item, activeCat.key);
                         return `
-                            <div class="target-card" draggable="true" data-key="${cat.key}" data-idx="${idx}">
+                            <div class="target-card" draggable="true" data-key="${activeCat.key}" data-idx="${idx}">
                                 <div class="target-card-header">
                                     <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
                                     <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
@@ -832,16 +847,16 @@ function renderContacts(container) {
                     }).join('')}
                 </div>
                 
-                <div class="input-group" style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border); display:flex; gap:8px;">
-                    <input type="text" id="add-${cat.key}" placeholder="${cat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; flex:1; box-sizing:border-box;">
-                    <button data-cat="${cat.key}" class="add-target-btn">
+                <!-- ADD BAR AT BOTTOM OF ACTIVE GRID -->
+                <div class="input-group" style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border); display:flex; gap:8px; max-width:480px; width:100%;">
+                    <input type="text" id="add-${activeCat.key}" placeholder="${activeCat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; flex:1; box-sizing:border-box;">
+                    <button data-cat="${activeCat.key}" class="add-target-btn">
                         <i class="ph ph-plus" style="font-weight:700;"></i> Add Item
                     </button>
                 </div>
-            </div>`;
-    });
+            </div>
+        </div>`;
 
-    html += '</div>';
     container.innerHTML = html;
 
     // Event delegation for blur (auto-saving)
@@ -881,6 +896,15 @@ function renderContacts(container) {
             }
         }
     }, true);
+
+    // Tab switching event listeners
+    container.querySelectorAll('.board-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.tab;
+            window._activeTargetTab = tab;
+            renderContacts(container);
+        });
+    });
 
     // Event listeners for Card Rearrangement Controls
     container.querySelectorAll('.pin-btn').forEach(btn => {
