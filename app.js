@@ -707,6 +707,57 @@ function formatURL(link) {
     return l;
 }
 
+function getIconForFieldLabel(label, value) {
+    if (label === 'LinkedIn') return 'ph-linkedin-logo';
+    if (label === 'Email') return 'ph-envelope';
+    if (label === 'Phone') return 'ph-phone';
+    if (label === 'GitHub') return 'ph-github-logo';
+    if (label === 'Twitter') return 'ph-twitter-logo';
+    if (label === 'Link') return getIconForLink(value);
+    return 'ph-link';
+}
+
+function getFieldURL(label, value) {
+    if (!value) return '';
+    const clean = value.trim();
+    if (label === 'Email') return `mailto:${clean}`;
+    if (label === 'Phone') return `tel:${clean}`;
+    return formatURL(clean);
+}
+
+function migrateFields(item, key) {
+    if (!item.fields) {
+        item.fields = [];
+    }
+    if (item.fields.length === 0) {
+        // Migrate old singular properties if they exist
+        if (item.link) {
+            item.fields.push({ label: 'LinkedIn', value: item.link });
+            delete item.link;
+        }
+        if (item.email) {
+            item.fields.push({ label: 'Email', value: item.email });
+            delete item.email;
+        }
+        if (item.phone) {
+            item.fields.push({ label: 'Phone', value: item.phone });
+            delete item.phone;
+        }
+    }
+    
+    // If still empty, populate sensible default fields
+    if (item.fields.length === 0) {
+        if (key === 'people') {
+            item.fields.push({ label: 'LinkedIn', value: '' });
+            item.fields.push({ label: 'Email', value: '' });
+            item.fields.push({ label: 'Phone', value: '' });
+        } else {
+            item.fields.push({ label: 'Link', value: '' });
+        }
+    }
+    return item.fields;
+}
+
 function renderContacts(container) {
     const data = getData();
     const categories = [
@@ -733,57 +784,51 @@ function renderContacts(container) {
                 
                 <div class="target-cards-list" id="col-${cat.key}" style="display:flex; flex-direction:column; gap:12px; min-height:50px;">
                     ${items.map((item, idx) => {
-                        if (cat.key === 'contacts') {
-                            return `
-                                <div class="target-card" draggable="true" data-key="${cat.key}" data-idx="${idx}">
-                                    <div class="target-card-header">
-                                        <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
-                                        <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
-                                            <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
-                                            <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
-                                            <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
-                                            <i class="ph ph-trash target-card-delete" title="Delete"></i>
-                                        </div>
+                        const fields = migrateFields(item, cat.key);
+                        return `
+                            <div class="target-card" draggable="true" data-key="${cat.key}" data-idx="${idx}">
+                                <div class="target-card-header">
+                                    <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
+                                    <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
+                                        <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
+                                        <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
+                                        <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
+                                        <i class="ph ph-trash target-card-delete" title="Delete"></i>
                                     </div>
-                                    <div class="target-card-link-row">
-                                        <i class="${getIconForLink(item.link || '')} target-card-link-icon"></i>
-                                        <div class="target-card-link-text" contenteditable="true" placeholder="LinkedIn or URL" data-field="link">${item.link || ''}</div>
-                                        ${item.link ? `<a href="${formatURL(item.link)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
-                                    </div>
-                                    <div class="target-card-link-row" style="margin-top: 4px;">
-                                        <i class="ph ph-envelope target-card-link-icon"></i>
-                                        <div class="target-card-link-text" contenteditable="true" placeholder="Email address" data-field="email">${item.email || ''}</div>
-                                        ${item.email ? `<a href="mailto:${item.email}" class="target-card-link-go" title="Send Email"><i class="ph ph-arrow-square-out"></i></a>` : ''}
-                                    </div>
-                                    <div class="target-card-link-row" style="margin-top: 4px;">
-                                        <i class="ph ph-phone target-card-link-icon"></i>
-                                        <div class="target-card-link-text" contenteditable="true" placeholder="Phone number" data-field="phone">${item.phone || ''}</div>
-                                        ${item.phone ? `<a href="tel:${item.phone}" class="target-card-link-go" title="Call Phone"><i class="ph ph-arrow-square-out"></i></a>` : ''}
-                                    </div>
-                                    <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
                                 </div>
-                            `;
-                        } else {
-                            return `
-                                <div class="target-card" draggable="true" data-key="${cat.key}" data-idx="${idx}">
-                                    <div class="target-card-header">
-                                        <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
-                                        <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
-                                            <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
-                                            <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
-                                            <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
-                                            <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                                
+                                <!-- DYNAMIC FIELDS (UP TO 10) -->
+                                <div class="target-card-fields" style="display:flex; flex-direction:column; gap:6px; margin-top: 4px; margin-bottom: 6px;">
+                                    ${fields.map((f, fIdx) => `
+                                        <div class="target-card-field-row" data-fidx="${fIdx}">
+                                            <i class="ph ${getIconForFieldLabel(f.label, f.value)} target-card-link-icon"></i>
+                                            <select class="target-card-field-label">
+                                                <option value="LinkedIn" ${f.label === 'LinkedIn' ? 'selected' : ''}>LinkedIn</option>
+                                                <option value="Link" ${f.label === 'Link' ? 'selected' : ''}>Link</option>
+                                                <option value="Email" ${f.label === 'Email' ? 'selected' : ''}>Email</option>
+                                                <option value="Phone" ${f.label === 'Phone' ? 'selected' : ''}>Phone</option>
+                                                <option value="GitHub" ${f.label === 'GitHub' ? 'selected' : ''}>GitHub</option>
+                                                <option value="Twitter" ${f.label === 'Twitter' ? 'selected' : ''}>Twitter</option>
+                                                <option value="Other" ${f.label === 'Other' ? 'selected' : ''}>Other</option>
+                                            </select>
+                                            <div class="target-card-link-text" contenteditable="true" placeholder="Enter details..." data-field="field-value">${f.value || ''}</div>
+                                            ${f.value ? `<a href="${getFieldURL(f.label, f.value)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                                            <i class="ph ph-x remove-field-btn" title="Remove field"></i>
                                         </div>
-                                    </div>
-                                    <div class="target-card-link-row">
-                                        <i class="${getIconForLink(item.link || '')} target-card-link-icon"></i>
-                                        <div class="target-card-link-text" contenteditable="true" placeholder="LinkedIn or URL" data-field="link">${item.link || ''}</div>
-                                        ${item.link ? `<a href="${formatURL(item.link)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
-                                    </div>
-                                    <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
+                                    `).join('')}
                                 </div>
-                            `;
-                        }
+
+                                <div class="target-card-footer" style="display:flex; align-items:center; justify-content:space-between; margin-top:2px; margin-bottom:8px; padding: 0 4px;">
+                                    ${fields.length < 10 ? `
+                                        <div class="add-field-btn" style="cursor:pointer; font-size:0.72rem; color:var(--accent); font-weight:600; display:inline-flex; align-items:center; gap:4px;" title="Add input field (up to 10)">
+                                            <i class="ph ph-plus-circle"></i> Add Field
+                                        </div>
+                                    ` : '<div style="font-size:0.68rem; color:var(--text-muted); font-weight:500;">Max 10 fields reached</div>'}
+                                </div>
+
+                                <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
+                            </div>
+                        `;
                     }).join('')}
                 </div>
                 
@@ -815,13 +860,23 @@ function renderContacts(container) {
 
         const d = getData();
         if (d[key] && d[key][idx]) {
-            const oldVal = d[key][idx][field] || '';
-            if (oldVal !== val) {
-                d[key][idx][field] = val;
-                saveData(d);
-                // If editing link, email or phone, refresh view to update external anchor tag & icon
-                if (field === 'link' || field === 'email' || field === 'phone') {
-                    renderContacts(container);
+            if (field === 'field-value') {
+                const fIdx = parseInt(target.closest('.target-card-field-row').dataset.fidx);
+                const fields = migrateFields(d[key][idx], key);
+                if (fields[fIdx]) {
+                    const oldVal = fields[fIdx].value || '';
+                    if (oldVal !== val) {
+                        fields[fIdx].value = val;
+                        d[key][idx].fields = fields;
+                        saveData(d);
+                        renderContacts(container);
+                    }
+                }
+            } else {
+                const oldVal = d[key][idx][field] || '';
+                if (oldVal !== val) {
+                    d[key][idx][field] = val;
+                    saveData(d);
                 }
             }
         }
@@ -955,6 +1010,67 @@ function renderContacts(container) {
         });
     });
 
+    // Change select label
+    container.querySelectorAll('.target-card-field-label').forEach(select => {
+        select.addEventListener('change', () => {
+            const card = select.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+            const fIdx = parseInt(select.closest('.target-card-field-row').dataset.fidx);
+            
+            const d = getData();
+            if (d[key] && d[key][idx]) {
+                const fields = migrateFields(d[key][idx], key);
+                if (fields[fIdx]) {
+                    fields[fIdx].label = select.value;
+                    d[key][idx].fields = fields;
+                    saveData(d);
+                    renderContacts(container);
+                }
+            }
+        });
+    });
+
+    // Add field button
+    container.querySelectorAll('.add-field-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+            
+            const d = getData();
+            if (d[key] && d[key][idx]) {
+                const fields = migrateFields(d[key][idx], key);
+                if (fields.length < 10) {
+                    const defaultLabel = key === 'people' ? 'Email' : 'Link';
+                    fields.push({ label: defaultLabel, value: '' });
+                    d[key][idx].fields = fields;
+                    saveData(d);
+                    renderContacts(container);
+                }
+            }
+        });
+    });
+
+    // Remove field button
+    container.querySelectorAll('.remove-field-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const card = btn.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+            const fIdx = parseInt(btn.closest('.target-card-field-row').dataset.fidx);
+            
+            const d = getData();
+            if (d[key] && d[key][idx]) {
+                const fields = migrateFields(d[key][idx], key);
+                fields.splice(fIdx, 1);
+                d[key][idx].fields = fields;
+                saveData(d);
+                renderContacts(container);
+            }
+        });
+    });
+
     // Event listeners for Add Buttons (Defensive Sibling Fallback included)
     container.querySelectorAll('.add-target-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -964,11 +1080,20 @@ function renderContacts(container) {
             if (!val) return;
             const d = getData();
             if (!d[cat]) d[cat] = [];
-            const newItem = { name: val, link: '', description: '' };
-            if (cat === 'contacts') {
-                newItem.email = '';
-                newItem.phone = '';
+            
+            const newItem = { name: val, description: '', fields: [] };
+            if (cat === 'people') {
+                newItem.fields = [
+                    { label: 'LinkedIn', value: '' },
+                    { label: 'Email', value: '' },
+                    { label: 'Phone', value: '' }
+                ];
+            } else {
+                newItem.fields = [
+                    { label: 'Link', value: '' }
+                ];
             }
+            
             d[cat].push(newItem);
             saveData(d);
             input.value = '';
@@ -987,11 +1112,20 @@ function renderContacts(container) {
                 const d = getData();
                 if (!cat) return;
                 if (!d[cat]) d[cat] = [];
-                const newItem = { name: val, link: '', description: '' };
-                if (cat === 'contacts') {
-                    newItem.email = '';
-                    newItem.phone = '';
+                
+                const newItem = { name: val, description: '', fields: [] };
+                if (cat === 'people') {
+                    newItem.fields = [
+                        { label: 'LinkedIn', value: '' },
+                        { label: 'Email', value: '' },
+                        { label: 'Phone', value: '' }
+                    ];
+                } else {
+                    newItem.fields = [
+                        { label: 'Link', value: '' }
+                    ];
                 }
+                
                 d[cat].push(newItem);
                 saveData(d);
                 input.value = '';
