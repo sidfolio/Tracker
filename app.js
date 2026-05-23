@@ -366,8 +366,38 @@ function showToast(msg, type = 'info') {
     const icon = type === 'success' ? 'ph-check-circle' : type === 'error' ? 'ph-warning' : 'ph-info';
     t.innerHTML = `<i class="ph-fill ${icon}" style="color:var(--accent)"></i> ${msg}`;
     c.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+    // Extend timeout to 4500ms when there is an undo button to give user time to click it!
+    const delay = msg.includes('Undo') ? 4500 : 3000;
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, delay);
 }
+
+window._lastArchivedGoal = null;
+window._undoLastArchive = function() {
+    if (!window._lastArchivedGoal) return;
+    const { originalGoal, archiveId } = window._lastArchivedGoal;
+    const d = getData();
+    
+    // Add back to active goals
+    d.goals = d.goals || [];
+    d.goals.push(originalGoal);
+    
+    // Remove from archive
+    if (d.archive) {
+        d.archive = d.archive.filter(x => x.id !== archiveId);
+    }
+    
+    // Clear last archived pointer
+    window._lastArchivedGoal = null;
+    
+    saveData(d);
+    renderGoalLists();
+    calculateZone();
+    
+    const container = document.getElementById('view-container');
+    if (container) renderDashboard(container);
+    
+    showToast('Goal restored successfully!', 'success');
+};
 
 // ======================== DASHBOARD ========================
 function renderDashboard(container) {
@@ -482,6 +512,20 @@ function renderDashboard(container) {
             </div>
         </div>
 
+        <!-- ADD GOAL (AT THE TOP) -->
+        <div class="card" style="margin-bottom:20px;">
+            <div class="card-title"><i class="ph ph-plus"></i> Add New Goal</div>
+            <div class="input-group">
+                <select id="new-goal-type" style="flex:0 0 120px;">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+                <input type="text" id="new-goal-text" placeholder="e.g., Cold email 5 recruiters at Ramp">
+                <button id="add-goal-btn">Add Goal</button>
+            </div>
+        </div>
+
         <!-- GOAL CARDS -->
         <div class="content-grid-3" style="margin-bottom:20px;">
             <div class="card">
@@ -495,20 +539,6 @@ function renderDashboard(container) {
             <div class="card">
                 <div class="card-title"><i class="ph ph-calendar"></i> Monthly Goals</div>
                 <ul class="goal-list" id="monthly-goals"></ul>
-            </div>
-        </div>
-
-        <!-- ADD GOAL -->
-        <div class="card">
-            <div class="card-title"><i class="ph ph-plus"></i> Add New Goal</div>
-            <div class="input-group">
-                <select id="new-goal-type" style="flex:0 0 120px;">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
-                <input type="text" id="new-goal-text" placeholder="e.g., Cold email 5 recruiters at Ramp">
-                <button id="add-goal-btn">Add Goal</button>
             </div>
         </div>
     `;
@@ -582,7 +612,7 @@ function renderGoalLists() {
             li.className = `goal-item${g.completed ? ' completed' : ''}`;
             li.innerHTML = `
                 <input type="checkbox" id="chk-${g.id}" ${g.completed ? 'checked' : ''}>
-                <label for="chk-${g.id}" class="goal-text">${g.text}</label>
+                <span class="goal-text" style="cursor: text; user-select: text;">${g.text}</span>
                 <i class="ph ph-trash" style="cursor:pointer;color:var(--text-muted);font-size:0.9rem;" title="Delete"></i>
             `;
 
@@ -592,18 +622,27 @@ function renderGoalLists() {
                 if (!goal) return;
 
                 if (e.target.checked) {
+                    const archiveId = goal.id + '_arc_' + Date.now();
+                    // Store details for Undo
+                    window._lastArchivedGoal = {
+                        originalGoal: { ...goal },
+                        archiveId: archiveId
+                    };
+
                     // Archive it
                     goal.completed = true;
                     d.archive = d.archive || [];
                     d.archive.push({
-                        id: goal.id + '_arc_' + Date.now(),
+                        id: archiveId,
                         text: goal.text,
                         type: goal.type,
                         completedAt: new Date().toISOString()
                     });
                     d.goals = d.goals.filter(x => x.id !== g.id);
                     saveData(d);
-                    showToast('Goal archived! 🏆 Great work.', 'success');
+                    
+                    showToast('Goal completed! 🏆 <span onclick="window._undoLastArchive()" style="text-decoration:underline; font-weight:700; margin-left:8px; cursor:pointer; color:var(--accent);">Undo</span>', 'success');
+                    
                     renderGoalLists();
                     calculateZone();
 
