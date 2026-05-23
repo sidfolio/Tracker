@@ -1195,9 +1195,9 @@ button.ghost:hover { background: var(--border-strong); }
 /* ==================== TARGET BOARD (COMPANIES/PEOPLE/PORTALS) ==================== */
 @media (min-width: 1024px) {
     .linear-list-board {
-        display: grid !important;
-        grid-template-columns: repeat(3, 1fr) !important;
-        align-items: start !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
         gap: 20px !important;
     }
 }
