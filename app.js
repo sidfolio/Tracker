@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // ======================== ROUTING ========================
 const views = {
     dashboard: renderDashboard,
-    companies: renderCompanies,
+    contacts:  renderContacts,
     coach:     renderCoach,
     skills:    renderSkills,
     archive:   renderArchive,
@@ -707,7 +707,7 @@ function formatURL(link) {
     return l;
 }
 
-function renderCompanies(container) {
+function renderContacts(container) {
     const data = getData();
     const categories = [
         { key: 'companies', label: 'Companies',      icon: 'ph-buildings',     placeholder: 'Add company...' },
@@ -782,7 +782,7 @@ function renderCompanies(container) {
                 saveData(d);
                 // If editing link, refresh view to update external anchor tag & icon
                 if (field === 'link') {
-                    renderCompanies(container);
+                    renderContacts(container);
                 }
             }
         }
@@ -800,7 +800,7 @@ function renderCompanies(container) {
                 const removedName = d[key][idx].name || 'item';
                 d[key].splice(idx, 1);
                 saveData(d);
-                renderCompanies(container);
+                renderContacts(container);
                 showToast(`Removed "${removedName}".`, 'success');
             }
         });
@@ -818,7 +818,7 @@ function renderCompanies(container) {
             d[cat].push({ name: val, link: '', description: '' });
             saveData(d);
             input.value = '';
-            renderCompanies(container);
+            renderContacts(container);
             showToast(`Added "${val}" successfully.`, 'success');
         });
     });
@@ -835,7 +835,7 @@ function renderCompanies(container) {
                 d[cat].push({ name: val, link: '', description: '' });
                 saveData(d);
                 input.value = '';
-                renderCompanies(container);
+                renderContacts(container);
                 showToast(`Added "${val}" successfully.`, 'success');
             }
         });
