@@ -735,7 +735,7 @@ function renderContacts(container) {
                     ${items.map((item, idx) => {
                         if (cat.key === 'contacts') {
                             return `
-                                <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
+                                <div class="target-card" draggable="true" data-key="${cat.key}" data-idx="${idx}">
                                     <div class="target-card-header">
                                         <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
                                         <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
@@ -765,7 +765,7 @@ function renderContacts(container) {
                             `;
                         } else {
                             return `
-                                <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
+                                <div class="target-card" draggable="true" data-key="${cat.key}" data-idx="${idx}">
                                     <div class="target-card-header">
                                         <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
                                         <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
@@ -893,6 +893,65 @@ function renderContacts(container) {
                 renderContacts(container);
                 showToast(`Removed "${removedName}".`, 'success');
             }
+        });
+    });
+
+    // HTML5 Drag and Drop Sorting within sections
+    let dragSrcEl = null;
+
+    container.querySelectorAll('.target-card').forEach(card => {
+        card.addEventListener('dragstart', (e) => {
+            // Check if focus is in input or contenteditable to avoid breaking typing selection
+            if (document.activeElement && document.activeElement.getAttribute('contenteditable') === 'true') {
+                e.preventDefault();
+                return;
+            }
+            dragSrcEl = card;
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', card.dataset.idx);
+        });
+
+        card.addEventListener('dragend', () => {
+            card.classList.remove('dragging');
+            container.querySelectorAll('.target-card').forEach(c => c.classList.remove('drag-over'));
+        });
+
+        card.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        });
+
+        card.addEventListener('dragenter', (e) => {
+            if (dragSrcEl && dragSrcEl !== card && dragSrcEl.dataset.key === card.dataset.key) {
+                card.classList.add('drag-over');
+            }
+        });
+
+        card.addEventListener('dragleave', () => {
+            card.classList.remove('drag-over');
+        });
+
+        card.addEventListener('drop', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            
+            if (dragSrcEl && dragSrcEl !== card && dragSrcEl.dataset.key === card.dataset.key) {
+                const key = card.dataset.key;
+                const fromIdx = parseInt(dragSrcEl.dataset.idx);
+                const toIdx = parseInt(card.dataset.idx);
+                
+                const d = getData();
+                if (d[key]) {
+                    const item = d[key].splice(fromIdx, 1)[0];
+                    d[key].splice(toIdx, 0, item);
+                    saveData(d);
+                    renderContacts(container);
+                    showToast(`Reordered successfully.`, 'success');
+                }
+            }
+            return false;
         });
     });
 
