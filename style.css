@@ -1267,7 +1267,7 @@ button.ghost:hover { background: var(--border-strong); }
 }
 .target-card-link-icon {
     font-size: 0.9rem !important;
-    color: var(--accent-light) !important;
+    color: var(--accent) !important;
     flex-shrink: 0 !important;
 }
 .target-card-link-text {

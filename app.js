@@ -732,25 +732,59 @@ function renderContacts(container) {
                 </div>
                 
                 <div class="target-cards-list" id="col-${cat.key}" style="display:flex; flex-direction:column; gap:12px; min-height:50px;">
-                    ${items.map((item, idx) => `
-                        <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
-                            <div class="target-card-header">
-                                <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
-                                <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
-                                    <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
-                                    <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
-                                    <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
-                                    <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                    ${items.map((item, idx) => {
+                        if (cat.key === 'contacts') {
+                            return `
+                                <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
+                                    <div class="target-card-header">
+                                        <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
+                                        <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
+                                            <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
+                                            <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
+                                            <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
+                                            <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                                        </div>
+                                    </div>
+                                    <div class="target-card-link-row">
+                                        <i class="${getIconForLink(item.link || '')} target-card-link-icon"></i>
+                                        <div class="target-card-link-text" contenteditable="true" placeholder="LinkedIn or URL" data-field="link">${item.link || ''}</div>
+                                        ${item.link ? `<a href="${formatURL(item.link)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                                    </div>
+                                    <div class="target-card-link-row" style="margin-top: 4px;">
+                                        <i class="ph ph-envelope target-card-link-icon"></i>
+                                        <div class="target-card-link-text" contenteditable="true" placeholder="Email address" data-field="email">${item.email || ''}</div>
+                                        ${item.email ? `<a href="mailto:${item.email}" class="target-card-link-go" title="Send Email"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                                    </div>
+                                    <div class="target-card-link-row" style="margin-top: 4px;">
+                                        <i class="ph ph-phone target-card-link-icon"></i>
+                                        <div class="target-card-link-text" contenteditable="true" placeholder="Phone number" data-field="phone">${item.phone || ''}</div>
+                                        ${item.phone ? `<a href="tel:${item.phone}" class="target-card-link-go" title="Call Phone"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                                    </div>
+                                    <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
                                 </div>
-                            </div>
-                            <div class="target-card-link-row">
-                                <i class="${getIconForLink(item.link)} target-card-link-icon"></i>
-                                <div class="target-card-link-text" contenteditable="true" placeholder="LinkedIn or URL" data-field="link">${item.link || ''}</div>
-                                ${item.link ? `<a href="${formatURL(item.link)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
-                            </div>
-                            <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
-                        </div>
-                    `).join('')}
+                            `;
+                        } else {
+                            return `
+                                <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
+                                    <div class="target-card-header">
+                                        <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
+                                        <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
+                                            <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
+                                            <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
+                                            <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
+                                            <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                                        </div>
+                                    </div>
+                                    <div class="target-card-link-row">
+                                        <i class="${getIconForLink(item.link || '')} target-card-link-icon"></i>
+                                        <div class="target-card-link-text" contenteditable="true" placeholder="LinkedIn or URL" data-field="link">${item.link || ''}</div>
+                                        ${item.link ? `<a href="${formatURL(item.link)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                                    </div>
+                                    <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
+                                </div>
+                            `;
+                        }
+                    }).join('')}
                 </div>
                 
                 <div class="input-group" style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border); display:flex; gap:8px;">
@@ -785,8 +819,8 @@ function renderContacts(container) {
             if (oldVal !== val) {
                 d[key][idx][field] = val;
                 saveData(d);
-                // If editing link, refresh view to update external anchor tag & icon
-                if (field === 'link') {
+                // If editing link, email or phone, refresh view to update external anchor tag & icon
+                if (field === 'link' || field === 'email' || field === 'phone') {
                     renderContacts(container);
                 }
             }
@@ -871,7 +905,12 @@ function renderContacts(container) {
             if (!val) return;
             const d = getData();
             if (!d[cat]) d[cat] = [];
-            d[cat].push({ name: val, link: '', description: '' });
+            const newItem = { name: val, link: '', description: '' };
+            if (cat === 'contacts') {
+                newItem.email = '';
+                newItem.phone = '';
+            }
+            d[cat].push(newItem);
             saveData(d);
             input.value = '';
             renderContacts(container);
@@ -889,7 +928,12 @@ function renderContacts(container) {
                 const d = getData();
                 if (!cat) return;
                 if (!d[cat]) d[cat] = [];
-                d[cat].push({ name: val, link: '', description: '' });
+                const newItem = { name: val, link: '', description: '' };
+                if (cat === 'contacts') {
+                    newItem.email = '';
+                    newItem.phone = '';
+                }
+                d[cat].push(newItem);
                 saveData(d);
                 input.value = '';
                 renderContacts(container);
