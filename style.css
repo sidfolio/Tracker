@@ -1191,3 +1191,145 @@ button.ghost:hover { background: var(--border-strong); }
 .color-swatch:hover {
     transform: scale(1.1);
 }
+
+/* ==================== TARGET BOARD (COMPANIES/PEOPLE/PORTALS) ==================== */
+@media (min-width: 1024px) {
+    .linear-list-board {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        align-items: start !important;
+        gap: 20px !important;
+    }
+}
+
+.target-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 14px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    position: relative !important;
+    transition: border-color var(--transition), box-shadow var(--transition) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+.target-card:hover {
+    border-color: var(--accent-light) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.target-card-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+}
+
+.target-card-name {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    width: 100% !important;
+    padding: 2px 0 !important;
+    min-height: 1.2em !important;
+}
+
+.target-card-delete {
+    color: var(--text-muted) !important;
+    cursor: pointer !important;
+    opacity: 0 !important;
+    transition: opacity var(--transition), color var(--transition) !important;
+    font-size: 0.95rem !important;
+    flex-shrink: 0 !important;
+}
+.target-card:hover .target-card-delete {
+    opacity: 1 !important;
+}
+.target-card-delete:hover {
+    color: var(--danger) !important;
+}
+
+.target-card-link-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 0.8rem !important;
+    color: var(--text-secondary) !important;
+    background: var(--bg-surface) !important;
+    padding: 6px 10px !important;
+    border-radius: var(--radius-sm) !important;
+    border: 1px solid var(--border) !important;
+}
+.target-card-link-icon {
+    font-size: 0.9rem !important;
+    color: var(--accent-light) !important;
+    flex-shrink: 0 !important;
+}
+.target-card-link-text {
+    flex-grow: 1 !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    color: var(--text-secondary) !important;
+    padding: 1px 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    min-height: 1.1em !important;
+}
+.target-card-link-text:focus {
+    color: var(--text-primary) !important;
+}
+.target-card-link-go {
+    color: var(--text-muted) !important;
+    transition: color var(--transition) !important;
+    font-size: 0.9rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.target-card-link-go:hover {
+    color: var(--accent-light) !important;
+}
+
+.target-card-desc {
+    font-size: 0.83rem !important;
+    color: var(--text-secondary) !important;
+    line-height: 1.45 !important;
+    border: none !important;
+    outline: none !important;
+    background: transparent !important;
+    padding: 4px 0 !important;
+    min-height: 24px !important;
+}
+.target-card-desc:focus {
+    color: var(--text-primary) !important;
+}
+
+/* Placeholders for editable fields */
+.target-card-name[contenteditable="true"]:empty::before {
+    content: attr(placeholder) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.5 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+}
+.target-card-link-text[contenteditable="true"]:empty::before {
+    content: attr(placeholder) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.4 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+}
+.target-card-desc[contenteditable="true"]:empty::before {
+    content: attr(placeholder) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.4 !important;
+    pointer-events: none !important;
+    position: absolute !important;
+}

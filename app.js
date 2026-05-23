@@ -27,13 +27,22 @@ function getDefaultData() {
             { id: "g5", type: "monthly", text: "Complete 1 High-Fidelity B2B Dashboard Prototype", completed: false }
         ],
         archive: [],  // { id, text, type, completedAt (ISO string) }
-        companies: {
-            dream:    ["Notion", "Figma", "Spotify", "Linear"],
-            ideal:    ["Ramp", "Airbnb", "Anthropic"],
-            sweetSpot:["Vercel", "Braintrust", "Clay"],
-            safeZone: ["Local NYC Agencies", "Mid-size B2B SaaS"],
-            danger:   ["Low-pay startups", "Roles misaligned with UX/Design Engineering"]
-        },
+        companies: [
+            { name: "Notion", link: "https://linkedin.com/company/notion", description: "Design-first product, gold standard for visual craft." },
+            { name: "Figma", link: "https://linkedin.com/company/figma", description: "Market leader in design tools. Exceptional systems design." },
+            { name: "Spotify", link: "https://linkedin.com/company/spotify", description: "Music and media player. Premium consumer design." },
+            { name: "Linear", link: "https://linkedin.com/company/linear-app", description: "High-performance issue tracker. Obsessed with speed & detail." },
+            { name: "Ramp", link: "https://linkedin.com/company/ramp-card", description: "Fintech innovator, fast product cycles." },
+            { name: "Airbnb", link: "https://linkedin.com/company/airbnb", description: "Pioneering travel marketplace, visual excellence." },
+            { name: "Vercel", link: "https://linkedin.com/company/vercel", description: "Frontend deployment platform. High engineering bar." }
+        ],
+        people: [
+            { name: "Design Director @ Figma", link: "https://linkedin.com/in/siddharth-srivastava", description: "Reach out via warm intro regarding systems team." }
+        ],
+        portals: [
+            { name: "LinkedIn Jobs", link: "https://linkedin.com/jobs", description: "Set alerts for 'Senior Product Designer' + 'Design Engineer' in NYC." },
+            { name: "Read.cv", link: "https://read.cv/explore", description: "Excellent source for highly visual and craft-obsessed startup roles." }
+        ],
         coach: {
             weaknesses: ["ADHD Distractions", "Time Management", "React / Coding Skills", "Math", "Imposter Syndrome"],
             strengths:  ["High Visual Craft", "Systems Mindset", "UX Research", "Creative Output"],
@@ -49,13 +58,68 @@ function getDefaultData() {
     };
 }
 
+function migrateData(data) {
+    if (!data) return false;
+    let changed = false;
+
+    // 1. Migrate companies if in old tiered format
+    if (data.companies && !Array.isArray(data.companies)) {
+        const old = data.companies;
+        const newComps = [];
+        const seen = new Set();
+        const extract = (arr) => {
+            if (Array.isArray(arr)) {
+                arr.forEach(name => {
+                    if (name && typeof name === 'string' && !seen.has(name)) {
+                        seen.add(name);
+                        newComps.push({ name, link: '', description: '' });
+                    }
+                });
+            }
+        };
+        extract(old.dream);
+        extract(old.ideal);
+        extract(old.sweetSpot);
+        extract(old.safeZone);
+        extract(old.danger);
+        data.companies = newComps;
+        changed = true;
+    } else if (!data.companies) {
+        data.companies = [];
+        changed = true;
+    }
+
+    // 2. Initialize people if missing
+    if (!data.people) {
+        data.people = [
+            { name: "Design Director @ Figma", link: "https://linkedin.com/in/siddharth-srivastava", description: "Targeting Systems Team. Reached out." }
+        ];
+        changed = true;
+    }
+
+    // 3. Initialize portals if missing
+    if (!data.portals) {
+        data.portals = [
+            { name: "LinkedIn Jobs", link: "https://linkedin.com/jobs", description: "Primary job hunting portal." },
+            { name: "Read.cv", link: "https://read.cv/explore", description: "Great for design-centric startups." }
+        ];
+        changed = true;
+    }
+
+    return changed;
+}
+
 function getData() {
-    if (_localData) return _localData;
+    if (_localData) {
+        if (migrateData(_localData)) saveData(_localData);
+        return _localData;
+    }
     const storedV2 = localStorage.getItem('nycTrackerData_v2');
     const storedV1 = localStorage.getItem('nycTrackerData');
     
     if (storedV2) {
         _localData = JSON.parse(storedV2);
+        const changed = migrateData(_localData);
         
         // Force recovery of skills if empty (e.g. wiped during initial Firebase sync)
         if ((!_localData.skills.hard || _localData.skills.hard.length === 0) && storedV1) {
@@ -64,9 +128,9 @@ function getData() {
                 _localData.skills = v1Data.skills;
                 _localData.coach = v1Data.coach;
                 _localData.companies = v1Data.companies;
-                saveData(_localData);
             }
         }
+        if (changed) saveData(_localData);
         return _localData;
     }
     
@@ -75,12 +139,14 @@ function getData() {
         const v1Data = JSON.parse(storedV1);
         _localData = { ...getDefaultData(), ...v1Data };
         if (!_localData.archive) _localData.archive = [];
+        migrateData(_localData);
         localStorage.setItem('nycTrackerData_v2', JSON.stringify(_localData));
         return _localData;
     }
 
     _localData = getDefaultData();
     if (!_localData.archive) _localData.archive = [];
+    migrateData(_localData);
     return _localData;
 }
 
@@ -126,6 +192,11 @@ function initFirebase() {
                 if (_localData.version !== 3) {
                     console.log('Migrating Cloud Data to V3 (Condensed Skills)...');
                     _localData = getData(); // This has the new V3 skills from data.js
+                    window._firebaseSetDoc(docRef, _localData);
+                }
+                
+                const migrated = migrateData(_localData);
+                if (migrated) {
                     window._firebaseSetDoc(docRef, _localData);
                 }
                 
@@ -614,42 +685,69 @@ function renderArchive(container) {
                         </li>`).join('')}
                 </ul>
             </div>`;
-    }
-
-    container.innerHTML = html;
+/// ======================== COMPANIES & SOURCES ========================
+function getIconForLink(link) {
+    if (!link) return 'ph-link';
+    const l = link.toLowerCase();
+    if (l.includes('linkedin.com')) return 'ph-linkedin-logo';
+    return 'ph-link';
 }
 
-// ======================== COMPANIES ========================
+function formatURL(link) {
+    if (!link) return '#';
+    const l = link.trim();
+    if (!/^https?:\/\//i.test(l)) {
+        return 'https://' + l;
+    }
+    return l;
+}
+
 function renderCompanies(container) {
     const data = getData();
-    const tiers = [
-        { key: 'dream',     label: 'Dream',      icon: 'ph-star',          color: '#e8a020' },
-        { key: 'ideal',     label: 'Ideal',       icon: 'ph-target',        color: '#3b82f6' },
-        { key: 'sweetSpot', label: 'Sweet Spot',  icon: 'ph-crosshair',     color: '#8b5cf6' },
-        { key: 'safeZone',  label: 'Safe Zone',   icon: 'ph-shield-check',  color: '#22c55e' },
-        { key: 'danger',    label: 'Danger',      icon: 'ph-warning',       color: '#ef4444' }
+    const categories = [
+        { key: 'companies', label: 'Companies',      icon: 'ph-buildings',     placeholder: 'Add company...' },
+        { key: 'people',    label: 'Key Contacts',   icon: 'ph-users-three',   placeholder: 'Add contact...' },
+        { key: 'portals',   label: 'Job Portals',    icon: 'ph-browser',       placeholder: 'Add portal...' }
     ];
 
     let html = `
         <div style="margin-bottom:24px;">
-            <h2 style="font-weight:700; letter-spacing:-0.02em; margin-bottom:4px;">Company Shortlist</h2>
-            <p style="color:var(--text-secondary); font-size:0.85rem;">Your curated target list for Blueprint roles.</p>
+            <h2 style="font-weight:700; letter-spacing:-0.02em; margin-bottom:4px;">Target Board & Sources</h2>
+            <p style="color:var(--text-secondary); font-size:0.85rem;">Manage your target companies, key outreach contacts, and job search portals in one place.</p>
         </div>
         <div class="linear-list-board">`;
 
-    tiers.forEach(t => {
+    categories.forEach(cat => {
+        const items = data[cat.key] || [];
         html += `
-            <div class="linear-column">
-                <div class="linear-header" style="color:${t.color}">
-                    <i class="ph ${t.icon}"></i> ${t.label}
-                    <span style="margin-left:auto; font-size:0.7rem; color:var(--text-muted); font-weight:400;">${data.companies[t.key].length} companies</span>
+            <div class="linear-column" style="display:flex; flex-direction:column; gap:16px;">
+                <div class="linear-header" style="color:var(--accent-light); margin-bottom: 0px; padding-bottom: 12px;">
+                    <i class="ph ${cat.icon}"></i> ${cat.label}
+                    <span style="margin-left:auto; font-size:0.7rem; color:var(--text-muted); font-weight:400;">${items.length} total</span>
                 </div>
-                <div class="linear-items" id="col-${t.key}">
-                    ${data.companies[t.key].map(c => `<div class="linear-item">${c}</div>`).join('')}
+                
+                <div class="target-cards-list" id="col-${cat.key}" style="display:flex; flex-direction:column; gap:12px; min-height:50px;">
+                    ${items.map((item, idx) => `
+                        <div class="target-card" data-key="${cat.key}" data-idx="${idx}">
+                            <div class="target-card-header">
+                                <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
+                                <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                            </div>
+                            <div class="target-card-link-row">
+                                <i class="${getIconForLink(item.link)} target-card-link-icon"></i>
+                                <div class="target-card-link-text" contenteditable="true" placeholder="LinkedIn or URL" data-field="link">${item.link || ''}</div>
+                                ${item.link ? `<a href="${formatURL(item.link)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                            </div>
+                            <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
+                        </div>
+                    `).join('')}
                 </div>
-                <div class="input-group" style="max-width:400px;">
-                    <input type="text" id="add-${t.key}" placeholder="Add to ${t.label}...">
-                    <button data-tier="${t.key}" class="add-comp-btn">Add</button>
+                
+                <div class="input-group" style="margin-top:auto; padding-top:12px; border-top:1px solid var(--border);">
+                    <input type="text" id="add-${cat.key}" placeholder="${cat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; width:100%; box-sizing:border-box;">
+                    <button data-cat="${cat.key}" class="add-target-btn" style="background:var(--accent-light); color:#000; font-weight:600; border-radius:var(--radius-sm); padding:8px 16px; margin-top:8px; width:100%; border:none; cursor:pointer; font-size:0.85rem;">
+                        <i class="ph ph-plus" style="font-weight:700;"></i> Add Item
+                    </button>
                 </div>
             </div>`;
     });
@@ -657,18 +755,84 @@ function renderCompanies(container) {
     html += '</div>';
     container.innerHTML = html;
 
-    container.querySelectorAll('.add-comp-btn').forEach(btn => {
+    // Event delegation for blur (auto-saving)
+    const cardBoard = container.querySelector('.linear-list-board');
+    cardBoard.addEventListener('blur', (e) => {
+        const target = e.target;
+        if (!target.hasAttribute('data-field')) return;
+
+        const card = target.closest('.target-card');
+        if (!card) return;
+
+        const key = card.dataset.key;
+        const idx = parseInt(card.dataset.idx);
+        const field = target.dataset.field;
+        const val = target.textContent.trim();
+
+        const d = getData();
+        if (d[key] && d[key][idx]) {
+            const oldVal = d[key][idx][field] || '';
+            if (oldVal !== val) {
+                d[key][idx][field] = val;
+                saveData(d);
+                // If editing link, refresh view to update external anchor tag & icon
+                if (field === 'link') {
+                    renderCompanies(container);
+                }
+            }
+        }
+    }, true);
+
+    // Event listeners for Delete Buttons
+    container.querySelectorAll('.target-card-delete').forEach(btn => {
         btn.addEventListener('click', () => {
-            const tier = btn.dataset.tier;
-            const input = document.getElementById(`add-${tier}`);
+            const card = btn.closest('.target-card');
+            const key = card.dataset.key;
+            const idx = parseInt(card.dataset.idx);
+
+            const d = getData();
+            if (d[key] && d[key][idx]) {
+                const removedName = d[key][idx].name || 'item';
+                d[key].splice(idx, 1);
+                saveData(d);
+                renderCompanies(container);
+                showToast(`Removed "${removedName}".`, 'success');
+            }
+        });
+    });
+
+    // Event listeners for Add Buttons
+    container.querySelectorAll('.add-target-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cat = btn.dataset.cat;
+            const input = document.getElementById(`add-${cat}`);
             const val = input.value.trim();
             if (!val) return;
             const d = getData();
-            d.companies[tier].push(val);
+            if (!d[cat]) d[cat] = [];
+            d[cat].push({ name: val, link: '', description: '' });
             saveData(d);
             input.value = '';
             renderCompanies(container);
-            showToast(`Added ${val} to ${tier}.`, 'success');
+            showToast(`Added "${val}" successfully.`, 'success');
+        });
+    });
+
+    // Enter Key on Inputs to Add Item
+    container.querySelectorAll('.linear-column input').forEach(input => {
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cat = input.id.replace('add-', '');
+                const val = input.value.trim();
+                if (!val) return;
+                const d = getData();
+                if (!d[cat]) d[cat] = [];
+                d[cat].push({ name: val, link: '', description: '' });
+                saveData(d);
+                input.value = '';
+                renderCompanies(container);
+                showToast(`Added "${val}" successfully.`, 'success');
+            }
         });
     });
 }

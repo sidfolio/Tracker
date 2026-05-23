@@ -15,13 +15,22 @@ const defaultData = {
         { id: "g4", type: "weekly", text: "Publish 1 LinkedIn update", completed: false },
         { id: "g5", type: "monthly", text: "Complete 1 High-Fidelity B2B Dashboard Prototype", completed: false }
     ],
-    companies: {
-        dream: ["Notion", "Figma", "Spotify"],
-        ideal: ["Ramp", "Airbnb"],
-        sweetSpot: ["Vercel", "Linear"],
-        safeZone: ["Local NYC Agencies", "Mid-size B2B SaaS"],
-        danger: ["Low-pay startups", "Roles misaligned with UX/Design Engineering"]
-    },
+    companies: [
+        { name: "Notion", link: "https://linkedin.com/company/notion", description: "Design-first product, gold standard for visual craft." },
+        { name: "Figma", link: "https://linkedin.com/company/figma", description: "Market leader in design tools. Exceptional systems design." },
+        { name: "Spotify", link: "https://linkedin.com/company/spotify", description: "Music and media player. Premium consumer design." },
+        { name: "Linear", link: "https://linkedin.com/company/linear-app", description: "High-performance issue tracker. Obsessed with speed & detail." },
+        { name: "Ramp", link: "https://linkedin.com/company/ramp-card", description: "Fintech innovator, fast product cycles." },
+        { name: "Airbnb", link: "https://linkedin.com/company/airbnb", description: "Pioneering travel marketplace, visual excellence." },
+        { name: "Vercel", link: "https://linkedin.com/company/vercel", description: "Frontend deployment platform. High engineering bar." }
+    ],
+    people: [
+        { name: "Design Director @ Figma", link: "https://linkedin.com/in/siddharth-srivastava", description: "Targeting Systems Team. Reached out." }
+    ],
+    portals: [
+        { name: "LinkedIn Jobs", link: "https://linkedin.com/jobs", description: "Primary job hunting portal." },
+        { name: "Read.cv", link: "https://read.cv/explore", description: "Great for design-centric startups." }
+    ],
     coach: {
         weaknesses: ["ADHD Distractions", "Time Management", "Coding Skills", "Math", "Imposter Syndrome"],
         strengths: ["Strong Visual Design", "UX Research", "Tangible Interactions", "Creative Output"],
