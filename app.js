@@ -585,12 +585,20 @@ function renderDashboard(container) {
 
     renderGoalLists();
 
+    // Destroy previous chart instances if they exist to prevent Chart.js reuse errors
+    if (window.goalDonutChart) {
+        window.goalDonutChart.destroy();
+    }
+    if (window.winsBarChart) {
+        window.winsBarChart.destroy();
+    }
+
     // --- Donut chart ---
     const isDark = !document.body.classList.contains('light');
     const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
     const labelColor = isDark ? '#8a8a9a' : '#666678';
 
-    new Chart(document.getElementById('goal-donut'), {
+    window.goalDonutChart = new Chart(document.getElementById('goal-donut'), {
         type: 'doughnut',
         data: {
             labels: ['Completed', 'Remaining'],
@@ -602,7 +610,7 @@ function renderDashboard(container) {
     });
 
     // --- Bar chart: wins per day ---
-    new Chart(document.getElementById('wins-bar'), {
+    window.winsBarChart = new Chart(document.getElementById('wins-bar'), {
         type: 'bar',
         data: {
             labels: dayLabels,
@@ -631,6 +639,13 @@ function renderDashboard(container) {
         calculateZone();
         renderDashboard(container);
         showToast('New goal added.', 'success');
+    });
+
+    document.getElementById('new-goal-text').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            document.getElementById('add-goal-btn').click();
+        }
     });
 }
 
@@ -1520,8 +1535,16 @@ function renderSkills(container) {
 
     `;
 
+    // Destroy previous chart instances if they exist to prevent Chart.js reuse errors
+    if (window.skillDonutChart) {
+        window.skillDonutChart.destroy();
+    }
+    if (window.priorityBarChart) {
+        window.priorityBarChart.destroy();
+    }
+
     // --- Charts ---
-    new Chart(document.getElementById('skill-donut'), {
+    window.skillDonutChart = new Chart(document.getElementById('skill-donut'), {
         type: 'doughnut',
         data: {
             labels: catNames,
@@ -1530,7 +1553,7 @@ function renderSkills(container) {
         options: { cutout: '70%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
     });
 
-    new Chart(document.getElementById('priority-bar'), {
+    window.priorityBarChart = new Chart(document.getElementById('priority-bar'), {
         type: 'bar',
         data: {
             labels: ['Must Have', 'Should Have', 'Nice to Have'],
