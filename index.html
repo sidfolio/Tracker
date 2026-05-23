@@ -47,53 +47,56 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
 <body>
+<a href="#view-container" class="skip-link">Skip to main content</a>
 <div class="app-container">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="sidebar-logo">
-            <div class="logo-icon"><i class="ph-fill ph-target"></i></div>
+    <aside class="sidebar" role="complementary" aria-label="Sidebar Menu">
+        <div class="sidebar-logo" role="banner" aria-label="Blueprint logo">
+            <div class="logo-icon" aria-hidden="true"><i class="ph-fill ph-target"></i></div>
             <div>
                 <div class="logo-text">Blueprint</div>
                 <div class="logo-sub">Mission Tracker</div>
             </div>
         </div>
 
-        <div class="nav-label">Menu</div>
-        <nav class="sidebar-nav">
-            <a href="#dashboard" class="nav-item active" id="nav-dashboard">
-                <i class="ph ph-squares-four"></i> Dashboard
-            </a>
-            <a href="#contacts" class="nav-item" id="nav-contacts">
-                <i class="ph ph-address-book"></i> Contacts
-            </a>
-            <a href="#coach" class="nav-item" id="nav-coach">
-                <i class="ph ph-brain"></i> Life Coach
-            </a>
-            <a href="#skills" class="nav-item" id="nav-skills">
-                <i class="ph ph-graduation-cap"></i> Skills & Gaps
-            </a>
-            <a href="#archive" class="nav-item" id="nav-archive">
-                <i class="ph ph-archive"></i> Archive
-            </a>
-            <a href="#journal" class="nav-item" id="nav-journal">
-                <i class="ph ph-notebook"></i> Journal
-            </a>
-            <a href="#news" class="nav-item" id="nav-news">
-                <i class="ph ph-newspaper"></i> NYC Feed
-            </a>
+        <div class="nav-label" id="menu-nav-label">Menu</div>
+        <nav class="sidebar-nav" aria-labelledby="menu-nav-label" role="navigation">
+            <div role="list" style="display:flex; flex-direction:column; gap:4px; width:100%;">
+                <a href="#dashboard" class="nav-item active" id="nav-dashboard" role="listitem" aria-current="page">
+                    <i class="ph ph-squares-four" aria-hidden="true"></i> Dashboard
+                </a>
+                <a href="#contacts" class="nav-item" id="nav-contacts" role="listitem">
+                    <i class="ph ph-address-book" aria-hidden="true"></i> Contacts
+                </a>
+                <a href="#coach" class="nav-item" id="nav-coach" role="listitem">
+                    <i class="ph ph-brain" aria-hidden="true"></i> Life Coach
+                </a>
+                <a href="#skills" class="nav-item" id="nav-skills" role="listitem">
+                    <i class="ph ph-graduation-cap" aria-hidden="true"></i> Skills & Gaps
+                </a>
+                <a href="#archive" class="nav-item" id="nav-archive" role="listitem">
+                    <i class="ph ph-archive" aria-hidden="true"></i> Archive
+                </a>
+                <a href="#journal" class="nav-item" id="nav-journal" role="listitem">
+                    <i class="ph ph-notebook" aria-hidden="true"></i> Journal
+                </a>
+                <a href="#news" class="nav-item" id="nav-news" role="listitem">
+                    <i class="ph ph-newspaper" aria-hidden="true"></i> NYC Feed
+                </a>
+            </div>
         </nav>
 
         <div class="sidebar-footer">
-            <div class="zone-indicator danger" id="overall-zone" title="Click for details">
-                <span class="status-dot"></span>
+            <div class="zone-indicator danger" id="overall-zone" title="Click for details" role="button" aria-expanded="false" aria-controls="zone-modal">
+                <span class="status-dot" aria-hidden="true"></span>
                 <span id="zone-text">Danger Zone</span>
             </div>
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
-    <main class="main-content">
+    <main class="main-content" role="main">
         <!-- TOP BAR -->
         <header class="topbar">
             <div class="topbar-greeting">
@@ -101,16 +104,16 @@
                 <div class="greeting-sub">Your $200k NYC offer awaits. Don't waste today.</div>
             </div>
             <div class="topbar-right">
-                <div class="countdown-pill">
+                <div class="countdown-pill" role="status" aria-live="polite">
                     <div class="countdown-label">Hours Remaining</div>
                     <div class="countdown-value" id="hours-remaining">6,480 <span class="unit">hrs</span></div>
                 </div>
-                <div class="avatar">SS</div>
+                <button class="avatar" id="profile-avatar" aria-label="Open profile menu">SS</button>
             </div>
         </header>
 
         <!-- VIEWS -->
-        <div id="view-container"></div>
+        <div id="view-container" tabindex="-1"></div>
     </main>
 </div>
 
@@ -142,6 +145,9 @@
     ⚠️ Firebase not configured yet — data saves locally only.
     <a href="#" id="dismiss-banner" style="margin-left:16px; color:#000; text-decoration:underline; font-weight:700;">Dismiss</a>
 </div>
+
+<!-- Screen Reader Live Announcements -->
+<div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
 <script src="data.js"></script>
 <script src="app.js"></script>

@@ -20,7 +20,7 @@
 
     /* Text */
     --text-primary:   rgba(255, 255, 255, 0.9);
-    --text-secondary: rgba(255, 255, 255, 0.5);
+    --text-secondary: rgba(255, 255, 255, 0.68);
     --text-muted:     rgba(255, 255, 255, 0.3);
 
     /* Accent */
@@ -1513,3 +1513,214 @@ button.ghost:hover { background: var(--border-strong); }
     gap: 16px !important;
     width: 100% !important;
 }
+
+/* ==================== WCAG 2.2 AA COMPLIANCE & VISIBLE FOCUS ==================== */
+:focus-visible {
+    outline: 2px solid var(--accent) !important;
+    outline-offset: 2px !important;
+}
+
+/* Bypass Block Skip Link */
+.skip-link {
+    position: fixed !important;
+    top: -100px !important;
+    left: 20px !important;
+    background: var(--accent) !important;
+    color: #000 !important;
+    padding: 10px 18px !important;
+    font-weight: 700 !important;
+    border-radius: var(--radius-sm) !important;
+    z-index: 100000 !important;
+    transition: top 0.2s ease-in-out !important;
+    text-decoration: none !important;
+    font-size: 0.85rem !important;
+    box-shadow: var(--glass-shadow) !important;
+}
+.skip-link:focus {
+    top: 20px !important;
+}
+
+/* Sticky top bar scroll offsets */
+[id] {
+    scroll-margin-top: 100px !important;
+}
+
+/* Keyboard Target Size overrides (WCAG SC 2.5.8) */
+.goal-item .ph-trash,
+.target-card-delete,
+.remove-field-btn,
+.sidebar-footer .zone-indicator,
+.avatar,
+.add-field-btn {
+    min-width: 24px !important;
+    min-height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+}
+
+/* Screen reader visible only fallback details */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    border: 0 !important;
+}
+
+/* Motion accessibility preference */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* ==================== ACCESSIBILITY KEYBOARD MODALS ==================== */
+.board-shortcuts-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)) !important;
+    gap: 12px !important;
+    margin-top: 14px !important;
+    max-height: 380px !important;
+    overflow-y: auto !important;
+    padding-right: 4px !important;
+}
+.shortcuts-group {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-md) !important;
+    padding: 10px !important;
+}
+.shortcuts-group h5 {
+    font-size: 0.76rem !important;
+    color: var(--accent) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 8px !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-bottom: 4px !important;
+}
+.shortcut-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 0.74rem !important;
+    margin-bottom: 6px !important;
+    color: var(--text-primary) !important;
+    gap: 8px !important;
+}
+.shortcut-row span {
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+}
+.shortcut-key {
+    background: var(--bg-elevated) !important;
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 1px 6px !important;
+    font-family: monospace !important;
+    font-size: 0.68rem !important;
+    color: var(--accent) !important;
+    white-space: nowrap !important;
+}
+
+/* Palette & Search modal styles */
+.palette-modal-content {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border-strong) !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 16px !important;
+    width: 90% !important;
+    max-width: 480px !important;
+    box-shadow: var(--glass-shadow) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+.palette-input {
+    background: var(--bg-base) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-sm) !important;
+    padding: 10px 14px !important;
+    font-size: 0.85rem !important;
+    color: var(--text-primary) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+    font-family: inherit !important;
+}
+.palette-input:focus {
+    border-color: var(--accent) !important;
+}
+.palette-list {
+    list-style: none !important;
+    max-height: 240px !important;
+    overflow-y: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+}
+.palette-item {
+    padding: 8px 12px !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 0.82rem !important;
+    color: var(--text-secondary) !important;
+    cursor: pointer !important;
+    transition: all var(--transition) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+.palette-item.selected, .palette-item:hover {
+    background: var(--accent-soft) !important;
+    color: var(--accent) !important;
+}
+.palette-badge {
+    font-size: 0.65rem !important;
+    background: var(--bg-elevated) !important;
+    color: var(--text-muted) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+}
+.palette-item.selected .palette-badge {
+    color: var(--accent) !important;
+    background: var(--accent-soft) !important;
+}
+
+/* Keyboard Reordering Drag State Visual Indicator */
+.target-card.keyboard-picked {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 14px var(--accent-soft) !important;
+    transform: translateY(-4px) !important;
+}
+
+/* ==================== COMPACT LAYOUT DENSITY CONFIG ==================== */
+body.layout-compact .stat-row {
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+}
+body.layout-compact .stat-card {
+    padding: 10px 14px !important;
+}
+body.layout-compact .content-grid,
+body.layout-compact .content-grid-3 {
+    gap: 12px !important;
+}
+body.layout-compact .card {
+    padding: 12px 16px !important;
+    margin-bottom: 12px !important;
+}
+body.layout-compact .goal-item {
+    padding: 4px 8px !important;
+}
+body.layout-compact .main-content {
+    padding: 16px 20px !important;
+}
+

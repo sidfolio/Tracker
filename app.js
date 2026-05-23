@@ -239,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Routing
+    initAccessibilityOverlays();
     window.addEventListener('hashchange', handleHashChange);
     handleHashChange();
 
@@ -288,12 +289,22 @@ function handleHashChange() {
     let hash = window.location.hash.replace('#', '') || 'dashboard';
     if (!views[hash]) hash = 'dashboard';
 
-    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    document.getElementById(`nav-${hash}`)?.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.remove('active');
+        el.removeAttribute('aria-current');
+    });
+    const activeNav = document.getElementById(`nav-${hash}`);
+    if (activeNav) {
+        activeNav.classList.add('active');
+        activeNav.setAttribute('aria-current', 'page');
+    }
 
     const container = document.getElementById('view-container');
     container.innerHTML = '';
     views[hash](container);
+    
+    // Announce route transition to screen readers
+    announce(`Navigated to ${hash.charAt(0).toUpperCase() + hash.slice(1)} page.`);
 }
 
 // ======================== COUNTDOWN ========================
@@ -464,7 +475,7 @@ function renderDashboard(container) {
                 <div class="chart-title"><i class="ph ph-chart-pie-slice"></i> Goal Breakdown</div>
                 <div style="display:flex; align-items:center; gap:32px;">
                     <div class="donut-wrap" style="width:180px; height:180px; flex-shrink:0;">
-                        <canvas id="goal-donut" width="180" height="180"></canvas>
+                        <canvas id="goal-donut" width="180" height="180" role="img" aria-label="Goal completion donut chart. Current completion: ${pct}%. Daily goals: ${dailyGoals}, Weekly goals: ${weeklyGoals}, Monthly goals: ${monthlyGoals}."></canvas>
                         <div class="donut-center">
                             <div class="big-num">${pct}%</div>
                             <div class="small-label">Done</div>
@@ -501,13 +512,36 @@ function renderDashboard(container) {
                         </div>
                     </div>
                 </div>
+                <!-- Offscreen text summary for screen readers -->
+                <div class="sr-only">
+                    <h4>Active goal completion statistics:</h4>
+                    <ul>
+                        <li>Daily goals total count: ${dailyGoals}</li>
+                        <li>Weekly goals total count: ${weeklyGoals}</li>
+                        <li>Monthly goals total count: ${monthlyGoals}</li>
+                        <li>Total goals active: ${totalGoals}</li>
+                        <li>Total active goals completed: ${completedGoals}</li>
+                        <li>Goal completion percentage: ${pct}%</li>
+                    </ul>
+                </div>
             </div>
 
             <!-- BAR CHART: Wins per day -->
             <div class="chart-card">
                 <div class="chart-title"><i class="ph ph-chart-bar"></i> Wins per Day (Last 7 Days)</div>
                 <div class="chart-wrap" style="height:180px;">
-                    <canvas id="wins-bar"></canvas>
+                    <canvas id="wins-bar" role="img" aria-label="Wins per day bar chart for the last 7 days. Day wins: ${dayWins.join(', ')} for days ${dayLabels.join(', ')}."></canvas>
+                </div>
+                <div class="sr-only">
+                    <h4>Win stats details table:</h4>
+                    <table>
+                        <thead>
+                            <tr><th>Day</th><th>Wins Completed</th></tr>
+                        </thead>
+                        <tbody>
+                            ${dayLabels.map((lbl, idx) => `<tr><td>${lbl}</td><td>${dayWins[idx]} wins</td></tr>`).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -515,31 +549,37 @@ function renderDashboard(container) {
         <!-- ADD GOAL (AT THE TOP) -->
         <div class="card" style="margin-bottom:20px;">
             <div class="card-title"><i class="ph ph-plus"></i> Add New Goal</div>
-            <div class="input-group">
-                <select id="new-goal-type" style="flex:0 0 120px;">
-                    <option value="daily">Daily</option>
-                    <option value="weekly">Weekly</option>
-                    <option value="monthly">Monthly</option>
-                </select>
-                <input type="text" id="new-goal-text" placeholder="e.g., Cold email 5 recruiters at Ramp">
-                <button id="add-goal-btn">Add Goal</button>
+            <div class="input-group" style="display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end;">
+                <div style="display:flex; flex-direction:column; gap:4px; flex:0 0 120px;">
+                    <label for="new-goal-type" style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Goal Type</label>
+                    <select id="new-goal-type" style="width:100%; box-sizing:border-box;">
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                    </select>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px; flex:1;">
+                    <label for="new-goal-text" style="font-size:0.75rem; font-weight:600; color:var(--text-secondary);">Goal Description</label>
+                    <input type="text" id="new-goal-text" placeholder="e.g., Cold email 5 recruiters at Ramp" style="width:100%; box-sizing:border-box; height:38px; padding:8px 12px;">
+                </div>
+                <button id="add-goal-btn" style="height:38px;">Add Goal</button>
             </div>
         </div>
 
         <!-- GOAL CARDS -->
         <div class="content-grid-3" style="margin-bottom:20px;">
-            <div class="card">
-                <div class="card-title"><i class="ph ph-sun"></i> Daily Goals</div>
+            <section class="card" aria-labelledby="daily-goals-title">
+                <div class="card-title" id="daily-goals-title"><i class="ph ph-sun"></i> Daily Goals</div>
                 <ul class="goal-list" id="daily-goals"></ul>
-            </div>
-            <div class="card">
-                <div class="card-title"><i class="ph ph-calendar-blank"></i> Weekly Goals</div>
+            </section>
+            <section class="card" aria-labelledby="weekly-goals-title">
+                <div class="card-title" id="weekly-goals-title"><i class="ph ph-calendar-blank"></i> Weekly Goals</div>
                 <ul class="goal-list" id="weekly-goals"></ul>
-            </div>
-            <div class="card">
-                <div class="card-title"><i class="ph ph-calendar"></i> Monthly Goals</div>
+            </section>
+            <section class="card" aria-labelledby="monthly-goals-title">
+                <div class="card-title" id="monthly-goals-title"><i class="ph ph-calendar"></i> Monthly Goals</div>
                 <ul class="goal-list" id="monthly-goals"></ul>
-            </div>
+            </section>
         </div>
     `;
 
@@ -610,11 +650,36 @@ function renderGoalLists() {
         goals.forEach(g => {
             const li = document.createElement('li');
             li.className = `goal-item${g.completed ? ' completed' : ''}`;
+            li.setAttribute('tabindex', '0');
+            li.setAttribute('role', 'listitem');
+            li.setAttribute('aria-label', `Goal: ${g.text}. Press Space to toggle, E or F2 to inline edit, Del to remove.`);
             li.innerHTML = `
-                <input type="checkbox" id="chk-${g.id}" ${g.completed ? 'checked' : ''}>
-                <span class="goal-text" style="cursor: text; user-select: text;">${g.text}</span>
-                <i class="ph ph-trash" style="cursor:pointer;color:var(--text-muted);font-size:0.9rem;" title="Delete"></i>
+                <input type="checkbox" id="chk-${g.id}" ${g.completed ? 'checked' : ''} aria-labelledby="goal-text-${g.id}">
+                <span class="goal-text" id="goal-text-${g.id}" contenteditable="true" data-goal-id="${g.id}" style="cursor: text; user-select: text;">${g.text}</span>
+                <i class="ph ph-trash" style="cursor:pointer;color:var(--text-muted);font-size:0.9rem;" title="Delete" aria-label="Delete goal: ${g.text.replace(/"/g, '&quot;')}" tabindex="0" role="button"></i>
             `;
+
+            // Edit inline
+            const span = li.querySelector('.goal-text');
+            span.addEventListener('blur', (e) => {
+                const newText = e.target.innerText.trim();
+                if (newText && newText !== g.text) {
+                    const d = getData();
+                    const goal = d.goals.find(x => x.id === g.id);
+                    if (goal) {
+                        goal.text = newText;
+                        saveData(d);
+                        showToast('Goal description updated.', 'success');
+                        announce(`Goal updated: ${newText}`);
+                    }
+                }
+            });
+            span.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    e.target.blur();
+                }
+            });
 
             li.querySelector('input').addEventListener('change', (e) => {
                 const d = getData();
@@ -642,6 +707,7 @@ function renderGoalLists() {
                     saveData(d);
                     
                     showToast('Goal completed! 🏆 <span onclick="window._undoLastArchive()" style="text-decoration:underline; font-weight:700; margin-left:8px; cursor:pointer; color:var(--accent);">Undo</span>', 'success');
+                    announce(`Completed goal: ${goal.text}.`);
                     
                     renderGoalLists();
                     calculateZone();
@@ -656,13 +722,25 @@ function renderGoalLists() {
                 }
             });
 
-            li.querySelector('.ph-trash').addEventListener('click', () => {
+            // Trash action
+            const trash = li.querySelector('.ph-trash');
+            const doDelete = () => {
                 const d = getData();
                 d.goals = d.goals.filter(x => x.id !== g.id);
                 saveData(d);
                 renderGoalLists();
                 calculateZone();
+                const container = document.getElementById('view-container');
+                if (container) renderDashboard(container);
                 showToast('Goal removed.', 'info');
+                announce(`Goal removed: ${g.text}`);
+            };
+            trash.addEventListener('click', doDelete);
+            trash.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    doDelete();
+                }
             });
 
             list.appendChild(li);
@@ -839,15 +917,16 @@ function renderContacts(container) {
                         </div>
                     ` : items.map((item, idx) => {
                         const fields = migrateFields(item, activeCat.key);
+                        const isPicked = window._pickedContactIndex === idx && window._pickedContactKey === activeCat.key;
                         return `
-                            <div class="target-card" draggable="true" data-key="${activeCat.key}" data-idx="${idx}">
+                            <article class="target-card${isPicked ? ' keyboard-picked' : ''}" draggable="true" data-key="${activeCat.key}" data-idx="${idx}" tabindex="0" role="listitem" aria-roledescription="draggable card" aria-label="${item.name || 'Unnamed contact'}. Press Space to select for keyboard reordering. Use Up/Down arrows to swap. Press E or Enter to edit name.">
                                 <div class="target-card-header">
                                     <div class="target-card-name" contenteditable="true" placeholder="Name" data-field="name">${item.name || ''}</div>
                                     <div class="target-card-controls" style="display:flex; align-items:center; gap:6px;">
-                                        <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;"></i>
-                                        <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;"></i>
-                                        <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;"></i>
-                                        <i class="ph ph-trash target-card-delete" title="Delete"></i>
+                                        <i class="ph ph-push-pin target-card-control pin-btn" title="Move to Top" style="cursor:pointer; font-size:0.85rem;" tabindex="0" role="button" aria-label="Pin ${item.name || 'item'} to top"></i>
+                                        <i class="ph ph-caret-up target-card-control up-btn" title="Move Up" style="cursor:pointer; font-size:0.95rem;" tabindex="0" role="button" aria-label="Move ${item.name || 'item'} up"></i>
+                                        <i class="ph ph-caret-down target-card-control down-btn" title="Move Down" style="cursor:pointer; font-size:0.95rem;" tabindex="0" role="button" aria-label="Move ${item.name || 'item'} down"></i>
+                                        <i class="ph ph-trash target-card-delete" title="Delete" tabindex="0" role="button" aria-label="Delete ${item.name || 'item'}"></i>
                                     </div>
                                 </div>
                                 
@@ -958,6 +1037,13 @@ function renderContacts(container) {
                 saveData(d);
                 renderContacts(container);
                 showToast(`Pinned "${item.name || 'item'}" to top.`, 'success');
+                announce(`Pinned ${item.name || 'item'} to top.`);
+            }
+        });
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                btn.click();
             }
         });
     });
@@ -975,7 +1061,16 @@ function renderContacts(container) {
                     d[key][idx - 1] = temp;
                     saveData(d);
                     renderContacts(container);
+                    const nextCard = container.querySelector(`.target-card[data-key="${key}"][data-idx="${idx - 1}"]`);
+                    nextCard?.focus();
+                    announce(`Moved ${temp.name || 'item'} up to position ${idx}.`);
                 }
+            }
+        });
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                btn.click();
             }
         });
     });
@@ -992,6 +1087,15 @@ function renderContacts(container) {
                 d[key][idx + 1] = temp;
                 saveData(d);
                 renderContacts(container);
+                const nextCard = container.querySelector(`.target-card[data-key="${key}"][data-idx="${idx + 1}"]`);
+                nextCard?.focus();
+                announce(`Moved ${temp.name || 'item'} down to position ${idx + 2}.`);
+            }
+        });
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                btn.click();
             }
         });
     });
@@ -1010,6 +1114,13 @@ function renderContacts(container) {
                 saveData(d);
                 renderContacts(container);
                 showToast(`Removed "${removedName}".`, 'success');
+                announce(`Removed ${removedName}.`);
+            }
+        });
+        btn.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                btn.click();
             }
         });
     });
@@ -1779,7 +1890,7 @@ function renderJournal(container) {
                 }
 
                 return `
-                <div class="journal-note ${note.pinned ? 'pinned' : ''}" style="background:${note.color};">
+                <div class="journal-note ${note.pinned ? 'pinned' : ''}" style="background:${note.color};" tabindex="0" role="listitem" aria-label="Journal entry: ${note.title || 'Untitled'}. Press Ctrl+Delete to remove.">
                     <div class="journal-note-title" contenteditable="true" data-id="${note.id}" placeholder="Title">${note.title || ''}</div>
                     ${bodyHTML}
                     
@@ -2081,3 +2192,839 @@ function renderJournal(container) {
         });
     });
 }
+
+// ======================== ACCESSIBILITY HELPERS & SPOTLIGHT/PALETTE ========================
+function announce(message) {
+    const el = document.getElementById('sr-announcer');
+    if (el) {
+        el.textContent = '';
+        setTimeout(() => {
+            el.textContent = message;
+        }, 50);
+    }
+}
+
+function initAccessibilityOverlays() {
+    if (document.getElementById('shortcuts-modal')) return;
+
+    // 1. Shortcuts Modal Cheatsheet
+    const shortcuts = document.createElement('div');
+    shortcuts.id = 'shortcuts-modal';
+    shortcuts.className = 'modal-overlay';
+    shortcuts.style.display = 'none';
+    shortcuts.innerHTML = `
+        <div class="modal-content" style="max-width:680px;">
+            <div class="modal-header">
+                <h3>⌨️ Keyboard Shortcuts Reference</h3>
+                <i class="ph ph-x modal-close" id="close-shortcuts-modal" tabindex="0" role="button" aria-label="Close Reference Modal"></i>
+            </div>
+            <div class="modal-body" style="padding-top: 10px;">
+                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:12px;">Every interactive module of Blueprint is fully keyboard controllable. Single-key shortcuts are ignored when typing in active textboxes.</p>
+                <div class="board-shortcuts-grid">
+                    <div class="shortcuts-group">
+                        <h5>Global & Search</h5>
+                        <div class="shortcut-row"><span>Keyboard Cheatsheet</span><span class="shortcut-key">?</span></div>
+                        <div class="shortcut-row"><span>Command Palette</span><span class="shortcut-key">Ctrl + K</span></div>
+                        <div class="shortcut-row"><span>Global Spotlight Search</span><span class="shortcut-key">Ctrl + F</span></div>
+                        <div class="shortcut-row"><span>Undo Last Archive</span><span class="shortcut-key">Ctrl + Z</span></div>
+                        <div class="shortcut-row"><span>Sync Database</span><span class="shortcut-key">Ctrl + S</span></div>
+                        <div class="shortcut-row"><span>Dismiss Overlays</span><span class="shortcut-key">Esc</span></div>
+                        <div class="shortcut-row"><span>Go to Dashboard</span><span class="shortcut-key">G</span></div>
+                        <div class="shortcut-row"><span>Go to Contacts</span><span class="shortcut-key">C</span></div>
+                    </div>
+                    <div class="shortcuts-group">
+                        <h5>Navigation Views</h5>
+                        <div class="shortcut-row"><span>Dashboard View</span><span class="shortcut-key">1</span></div>
+                        <div class="shortcut-row"><span>Contacts View</span><span class="shortcut-key">2</span></div>
+                        <div class="shortcut-row"><span>Life Coach View</span><span class="shortcut-key">3</span></div>
+                        <div class="shortcut-row"><span>Skills View</span><span class="shortcut-key">4</span></div>
+                        <div class="shortcut-row"><span>Archive View</span><span class="shortcut-key">5</span></div>
+                        <div class="shortcut-row"><span>Journal View</span><span class="shortcut-key">6</span></div>
+                        <div class="shortcut-row"><span>NYC Feed View</span><span class="shortcut-key">7</span></div>
+                        <div class="shortcut-row"><span>Cycle Menu</span><span class="shortcut-key">↑ / ↓</span></div>
+                    </div>
+                    <div class="shortcuts-group">
+                        <h5>Dashboard & Goals</h5>
+                        <div class="shortcut-row"><span>New Goal Focus</span><span class="shortcut-key">N</span></div>
+                        <div class="shortcut-row"><span>Toggle Checkbox</span><span class="shortcut-key">Space</span></div>
+                        <div class="shortcut-row"><span>Cycle Goal List</span><span class="shortcut-key">j / k</span></div>
+                        <div class="shortcut-row"><span>Jump to Daily Col</span><span class="shortcut-key">Shift + D</span></div>
+                        <div class="shortcut-row"><span>Jump to Weekly Col</span><span class="shortcut-key">Shift + W</span></div>
+                        <div class="shortcut-row"><span>Jump to Monthly Col</span><span class="shortcut-key">Shift + M</span></div>
+                        <div class="shortcut-row"><span>Inline Text Edit</span><span class="shortcut-key">E / F2</span></div>
+                        <div class="shortcut-row"><span>Delete Goal</span><span class="shortcut-key">Del</span></div>
+                    </div>
+                    <div class="shortcuts-group">
+                        <h5>Target Contacts</h5>
+                        <div class="shortcut-row"><span>Add Card Item</span><span class="shortcut-key">N</span></div>
+                        <div class="shortcut-row"><span>Edit Name / Details</span><span class="shortcut-key">E / Enter</span></div>
+                        <div class="shortcut-row"><span>Add Card Field</span><span class="shortcut-key">Ctrl + +</span></div>
+                        <div class="shortcut-row"><span>Delete Card Item</span><span class="shortcut-key">Del</span></div>
+                        <div class="shortcut-row"><span>Select Card (Reorder)</span><span class="shortcut-key">Space</span></div>
+                        <div class="shortcut-row"><span>Reorder Swaps</span><span class="shortcut-key">↑ / ↓</span></div>
+                    </div>
+                    <div class="shortcuts-group">
+                        <h5>Journal & Notes</h5>
+                        <div class="shortcut-row"><span>New Entry Focus</span><span class="shortcut-key">N</span></div>
+                        <div class="shortcut-row"><span>Save Entry</span><span class="shortcut-key">Ctrl + S</span></div>
+                        <div class="shortcut-row"><span>Format Bold</span><span class="shortcut-key">Ctrl + B</span></div>
+                        <div class="shortcut-row"><span>Format Italic</span><span class="shortcut-key">Ctrl + I</span></div>
+                        <div class="shortcut-row"><span>Delete Entry Note</span><span class="shortcut-key">Ctrl + Del</span></div>
+                        <div class="shortcut-row"><span>Cycle Notes cards</span><span class="shortcut-key">Ctrl + ↑/↓</span></div>
+                    </div>
+                    <div class="shortcuts-group">
+                        <h5>Power Actions</h5>
+                        <div class="shortcut-row"><span>Auto-complete Dailies</span><span class="shortcut-key">Ctrl+Sh+Ent</span></div>
+                        <div class="shortcut-row"><span>Open Archive List</span><span class="shortcut-key">Ctrl + H</span></div>
+                        <div class="shortcut-row"><span>Toggle Zone Details</span><span class="shortcut-key">Z</span></div>
+                        <div class="shortcut-row"><span>JSON Data Export</span><span class="shortcut-key">Ctrl+Sh+E</span></div>
+                        <div class="shortcut-row"><span>Reload & Animate Charts</span><span class="shortcut-key">Ctrl+Sh+R</span></div>
+                        <div class="shortcut-row"><span>Toggle Compact Density</span><span class="shortcut-key">Ctrl+Sh+D</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(shortcuts);
+
+    document.getElementById('close-shortcuts-modal').addEventListener('click', () => {
+        shortcuts.style.display = 'none';
+    });
+    shortcuts.addEventListener('click', (e) => {
+        if (e.target === shortcuts) shortcuts.style.display = 'none';
+    });
+
+    // 2. Command Palette Modal
+    const palette = document.createElement('div');
+    palette.id = 'command-palette-modal';
+    palette.className = 'modal-overlay';
+    palette.style.display = 'none';
+    palette.innerHTML = `
+        <div class="palette-modal-content">
+            <input type="text" id="palette-search" class="palette-input" placeholder="Type a command... (Use ↑/↓ arrows, Enter to run)">
+            <ul id="palette-results" class="palette-list"></ul>
+        </div>
+    `;
+    document.body.appendChild(palette);
+
+    // 3. Global Search Modal
+    const gSearch = document.createElement('div');
+    gSearch.id = 'global-search-modal';
+    gSearch.className = 'modal-overlay';
+    gSearch.style.display = 'none';
+    gSearch.innerHTML = `
+        <div class="palette-modal-content">
+            <input type="text" id="gsearch-search" class="palette-input" placeholder="Search goals, contacts, and journal entries...">
+            <ul id="gsearch-results" class="palette-list"></ul>
+        </div>
+    `;
+    document.body.appendChild(gSearch);
+
+    // Command palette bindings
+    const paletteInput = document.getElementById('palette-search');
+    paletteInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (!query) {
+            filteredCommands = [...COMMANDS];
+        } else {
+            filteredCommands = COMMANDS.filter(cmd => 
+                cmd.name.toLowerCase().includes(query) || 
+                cmd.desc.toLowerCase().includes(query)
+            );
+        }
+        selectedCommandIdx = 0;
+        renderCommandPalette();
+    });
+
+    paletteInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (filteredCommands.length > 0) {
+                selectedCommandIdx = (selectedCommandIdx + 1) % filteredCommands.length;
+                renderCommandPalette();
+                const items = document.querySelectorAll('#palette-results .palette-item');
+                items[selectedCommandIdx]?.scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (filteredCommands.length > 0) {
+                selectedCommandIdx = (selectedCommandIdx - 1 + filteredCommands.length) % filteredCommands.length;
+                renderCommandPalette();
+                const items = document.querySelectorAll('#palette-results .palette-item');
+                items[selectedCommandIdx]?.scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (filteredCommands[selectedCommandIdx]) {
+                filteredCommands[selectedCommandIdx].action();
+                document.getElementById('command-palette-modal').style.display = 'none';
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            document.getElementById('command-palette-modal').style.display = 'none';
+        }
+    });
+
+    // Global Spotlight Search bindings
+    const gSearchInput = document.getElementById('gsearch-search');
+    gSearchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        if (query.length < 2) {
+            activeSearchResults = [];
+        } else {
+            activeSearchResults = getGlobalSearchResults(query);
+        }
+        selectedSearchIdx = 0;
+        renderGlobalSearchResults();
+    });
+
+    gSearchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (activeSearchResults.length > 0) {
+                selectedSearchIdx = (selectedSearchIdx + 1) % activeSearchResults.length;
+                renderGlobalSearchResults();
+                const items = document.querySelectorAll('#gsearch-results .palette-item');
+                items[selectedSearchIdx]?.scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (activeSearchResults.length > 0) {
+                selectedSearchIdx = (selectedSearchIdx - 1 + activeSearchResults.length) % activeSearchResults.length;
+                renderGlobalSearchResults();
+                const items = document.querySelectorAll('#gsearch-results .palette-item');
+                items[selectedSearchIdx]?.scrollIntoView({ block: 'nearest' });
+            }
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeSearchResults[selectedSearchIdx]) {
+                activeSearchResults[selectedSearchIdx].action();
+                document.getElementById('global-search-modal').style.display = 'none';
+            }
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            document.getElementById('global-search-modal').style.display = 'none';
+        }
+    });
+}
+
+const COMMANDS = [
+    { name: "Go to Dashboard", desc: "View your stats, charts, and goals", action: () => { window.location.hash = '#dashboard'; } },
+    { name: "Go to Contacts", desc: "View companies, outreach, and job portals", action: () => { window.location.hash = '#contacts'; } },
+    { name: "Go to Life Coach", desc: "Get AI mindset guidance and analysis", action: () => { window.location.hash = '#coach'; } },
+    { name: "Go to Skills & Gaps", desc: "Assess required job specs and roadmap", action: () => { window.location.hash = '#skills'; } },
+    { name: "Go to Archive", desc: "Browse your historical completed targets", action: () => { window.location.hash = '#archive'; } },
+    { name: "Go to Journal", desc: "Draft reflective logs and checklists", action: () => { window.location.hash = '#journal'; } },
+    { name: "Go to NYC Feed", desc: "Read tech news and local events calendar", action: () => { window.location.hash = '#news'; } },
+    { name: "Clear Daily Goals", desc: "Wipes out active daily goals", action: () => {
+        const d = getData();
+        d.goals = d.goals.filter(g => g.type !== 'daily');
+        saveData(d);
+        renderGoalLists();
+        calculateZone();
+        const container = document.getElementById('view-container');
+        if (container) renderDashboard(container);
+        showToast('Daily goals cleared.', 'info');
+        announce('Cleared daily goals.');
+    } },
+    { name: "Toggle Zone Status Details", desc: "View details of current ADHD Zone", action: () => { showZoneModal(); } },
+    { name: "Export JSON Database Backup", desc: "Export schema database file", action: () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getData(), null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "blueprint_backup.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('JSON backup exported.', 'success');
+    } },
+    { name: "Reload Chart.js Animations", desc: "Reload donut and win bar charts", action: () => {
+        const container = document.getElementById('view-container');
+        if (container && window.location.hash.replace('#', '') === 'dashboard') {
+            renderDashboard(container);
+            showToast('Charts reloaded.', 'success');
+        }
+    } },
+    { name: "Toggle Layout Density (Compact)", desc: "Compress page paddings and gap sizes", action: () => {
+        document.body.classList.toggle('layout-compact');
+        const active = document.body.classList.contains('layout-compact');
+        showToast(`Layout set to ${active ? 'Compact' : 'Normal'} density.`, 'success');
+        announce(`Layout density toggled to ${active ? 'compact' : 'normal'}.`);
+    } },
+    { name: "Undo Last Goal Archive", desc: "Restore the last completed goal", action: () => { window._undoLastArchive(); } }
+];
+
+let selectedCommandIdx = 0;
+let filteredCommands = [...COMMANDS];
+
+function renderCommandPalette() {
+    const listEl = document.getElementById('palette-results');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (filteredCommands.length === 0) {
+        listEl.innerHTML = `<li style="padding:12px; color:var(--text-muted); font-size:0.85rem; text-align:center;">No matching commands.</li>`;
+        return;
+    }
+
+    filteredCommands.forEach((cmd, idx) => {
+        const li = document.createElement('li');
+        li.className = `palette-item${idx === selectedCommandIdx ? ' selected' : ''}`;
+        li.innerHTML = `
+            <div>
+                <span style="font-weight:600; display:block;">${cmd.name}</span>
+                <span style="font-size:0.72rem; color:var(--text-muted);">${cmd.desc}</span>
+            </div>
+            <span class="palette-badge">Run</span>
+        `;
+        li.addEventListener('click', () => {
+            cmd.action();
+            document.getElementById('command-palette-modal').style.display = 'none';
+        });
+        listEl.appendChild(li);
+    });
+}
+
+function getGlobalSearchResults(query) {
+    const data = getData();
+    const results = [];
+    const q = query.toLowerCase();
+
+    // 1. Active goals
+    if (data.goals) {
+        data.goals.forEach(g => {
+            if (g.text.toLowerCase().includes(q)) {
+                results.push({
+                    type: 'Active Goal',
+                    icon: 'ph-target',
+                    title: g.text,
+                    desc: `Type: ${g.type.toUpperCase()}`,
+                    action: () => {
+                        window.location.hash = '#dashboard';
+                        setTimeout(() => {
+                            const li = document.getElementById(`chk-${g.id}`)?.closest('.goal-item');
+                            if (li) {
+                                li.focus();
+                                li.style.outline = '3px solid var(--accent)';
+                                setTimeout(() => li.style.outline = '', 3000);
+                            }
+                        }, 100);
+                    }
+                });
+            }
+        });
+    }
+
+    // 2. Archived goals
+    if (data.archive) {
+        data.archive.forEach(a => {
+            if (a.text.toLowerCase().includes(q)) {
+                results.push({
+                    type: 'Archived Goal',
+                    icon: 'ph-archive',
+                    title: a.text,
+                    desc: `Completed on ${new Date(a.completedAt).toLocaleDateString()}`,
+                    action: () => {
+                        window.location.hash = '#archive';
+                        setTimeout(() => {
+                            const archItems = Array.from(document.querySelectorAll('.archive-item'));
+                            const item = archItems.find(el => el.textContent.includes(a.text));
+                            if (item) {
+                                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                item.style.outline = '3px solid var(--accent)';
+                                setTimeout(() => item.style.outline = '', 3000);
+                            }
+                        }, 100);
+                    }
+                });
+            }
+        });
+    }
+
+    // 3. Contacts
+    ['companies', 'people', 'portals'].forEach(key => {
+        if (data[key]) {
+            data[key].forEach((item, idx) => {
+                const nameMatches = item.name && item.name.toLowerCase().includes(q);
+                const descMatches = item.description && item.description.toLowerCase().includes(q);
+                const fieldMatches = item.fields && item.fields.some(f => f.value && f.value.toLowerCase().includes(q));
+
+                if (nameMatches || descMatches || fieldMatches) {
+                    results.push({
+                        type: `Contact (${key.charAt(0).toUpperCase() + key.slice(1)})`,
+                        icon: key === 'companies' ? 'ph-buildings' : key === 'people' ? 'ph-users-three' : 'ph-browser',
+                        title: item.name || 'Unnamed item',
+                        desc: item.description || 'No description',
+                        action: () => {
+                            window._activeTargetTab = key;
+                            window.location.hash = '#contacts';
+                            setTimeout(() => {
+                                const card = document.querySelector(`.target-card[data-key="${key}"][data-idx="${idx}"]`);
+                                if (card) {
+                                    card.focus();
+                                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    card.style.outline = '3px solid var(--accent)';
+                                    setTimeout(() => card.style.outline = '', 3000);
+                                }
+                            }, 100);
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    // 4. Journal notes
+    if (data.journal) {
+        data.journal.forEach(note => {
+            const titleMatches = note.title && note.title.toLowerCase().includes(q);
+            const bodyMatches = note.body && note.body.toLowerCase().includes(q);
+
+            if (titleMatches || bodyMatches) {
+                results.push({
+                    type: 'Journal Note',
+                    icon: 'ph-notebook',
+                    title: note.title || 'Untitled note',
+                    desc: note.body.substring(0, 60) + (note.body.length > 60 ? '...' : ''),
+                    action: () => {
+                        window.location.hash = '#journal';
+                        setTimeout(() => {
+                            const noteEl = Array.from(document.querySelectorAll('.journal-note')).find(el => {
+                                const titleEl = el.querySelector('.journal-note-title');
+                                return titleEl && titleEl.textContent.trim() === (note.title || '').trim();
+                            });
+                            if (noteEl) {
+                                noteEl.focus();
+                                noteEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                noteEl.style.outline = '3px solid var(--accent)';
+                                setTimeout(() => noteEl.style.outline = '', 3000);
+                            }
+                        }, 100);
+                    }
+                });
+            }
+        });
+    }
+
+    return results;
+}
+
+let selectedSearchIdx = 0;
+let activeSearchResults = [];
+
+function renderGlobalSearchResults() {
+    const listEl = document.getElementById('gsearch-results');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (activeSearchResults.length === 0) {
+        listEl.innerHTML = `<li style="padding:12px; color:var(--text-muted); font-size:0.85rem; text-align:center;">No matches found. Try another query!</li>`;
+        return;
+    }
+
+    activeSearchResults.forEach((res, idx) => {
+        const li = document.createElement('li');
+        li.className = `palette-item${idx === selectedSearchIdx ? ' selected' : ''}`;
+        li.innerHTML = `
+            <div>
+                <span style="font-size:0.65rem; text-transform:uppercase; color:var(--accent); font-weight:700; display:flex; align-items:center; gap:4px;">
+                    <i class="ph ${res.icon}"></i> ${res.type}
+                </span>
+                <span style="font-weight:600; display:block; margin-top:2px;">${res.title}</span>
+                <span style="font-size:0.72rem; color:var(--text-secondary);">${res.desc}</span>
+            </div>
+            <span class="palette-badge">Go</span>
+        `;
+        li.addEventListener('click', () => {
+            res.action();
+            document.getElementById('global-search-modal').style.display = 'none';
+        });
+        listEl.appendChild(li);
+    });
+}
+
+// Global window keydown hotkeys engine
+window.addEventListener('keydown', (e) => {
+    const isInputActive = document.activeElement && (
+        document.activeElement.tagName === 'INPUT' ||
+        document.activeElement.tagName === 'TEXTAREA' ||
+        document.activeElement.getAttribute('contenteditable') === 'true' ||
+        document.activeElement.closest('[contenteditable="true"]')
+    );
+
+    // Global combo overrides (always active)
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        window._undoLastArchive();
+        return;
+    }
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        const modal = document.getElementById('command-palette-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.getElementById('palette-search').value = '';
+            filteredCommands = [...COMMANDS];
+            selectedCommandIdx = 0;
+            renderCommandPalette();
+            document.getElementById('palette-search').focus();
+        }
+        return;
+    }
+    if (e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        const modal = document.getElementById('global-search-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            document.getElementById('gsearch-search').value = '';
+            activeSearchResults = [];
+            selectedSearchIdx = 0;
+            renderGlobalSearchResults();
+            document.getElementById('gsearch-search').focus();
+        }
+        return;
+    }
+    if (e.key === 'Escape') {
+        document.getElementById('shortcuts-modal').style.display = 'none';
+        document.getElementById('command-palette-modal').style.display = 'none';
+        document.getElementById('global-search-modal').style.display = 'none';
+        document.getElementById('zone-modal').style.display = 'none';
+        return;
+    }
+
+    if (e.ctrlKey) {
+        if (e.key.toLowerCase() === 's') {
+            e.preventDefault();
+            const saveBtn = document.getElementById('j-new-save');
+            if (saveBtn) {
+                saveBtn.click();
+                showToast('Draft note saved to journal.', 'success');
+            } else {
+                if (document.activeElement && document.activeElement.blur) {
+                    document.activeElement.blur();
+                }
+                showToast('Journal notes synced and saved.', 'success');
+            }
+            return;
+        }
+        if (e.ctrlKey && e.key === 'Delete') {
+            const activeNote = document.activeElement.closest('.journal-note');
+            if (activeNote) {
+                e.preventDefault();
+                const delBtn = activeNote.querySelector('.j-action-delete');
+                if (delBtn) delBtn.click();
+            }
+            return;
+        }
+        if (e.shiftKey) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const d = getData();
+                const dailyGoals = d.goals.filter(g => g.type === 'daily');
+                if (dailyGoals.length === 0) {
+                    showToast('No active daily goals to complete.', 'info');
+                    return;
+                }
+                d.archive = d.archive || [];
+                const timestamp = new Date().toISOString();
+                dailyGoals.forEach(g => {
+                    g.completed = true;
+                    d.archive.push({
+                        id: g.id + '_arc_' + Date.now(),
+                        text: g.text,
+                        type: g.type,
+                        completedAt: timestamp
+                    });
+                });
+                d.goals = d.goals.filter(g => g.type !== 'daily');
+                saveData(d);
+                renderGoalLists();
+                calculateZone();
+                const container = document.getElementById('view-container');
+                if (container) renderDashboard(container);
+                showToast('All daily goals completed & archived! 🏆', 'success');
+                announce('Completed all daily goals.');
+                return;
+            }
+            if (e.key.toLowerCase() === 'e') {
+                e.preventDefault();
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getData(), null, 2));
+                const downloadAnchor = document.createElement('a');
+                downloadAnchor.setAttribute("href", dataStr);
+                downloadAnchor.setAttribute("download", "blueprint_backup.json");
+                document.body.appendChild(downloadAnchor);
+                downloadAnchor.click();
+                downloadAnchor.remove();
+                showToast('JSON backup database exported successfully.', 'success');
+                return;
+            }
+            if (e.key.toLowerCase() === 'r') {
+                e.preventDefault();
+                const container = document.getElementById('view-container');
+                if (container && window.location.hash.replace('#', '') === 'dashboard') {
+                    renderDashboard(container);
+                    showToast('Charts reloaded and re-animated.', 'success');
+                }
+                return;
+            }
+            if (e.key.toLowerCase() === 'd') {
+                e.preventDefault();
+                document.body.classList.toggle('layout-compact');
+                const active = document.body.classList.contains('layout-compact');
+                showToast(`Layout set to ${active ? 'Compact' : 'Normal'} density.`, 'success');
+                return;
+            }
+        }
+    }
+
+    // Ignore single key navigation and hotkeys when typing in active editors/inputs
+    if (isInputActive) return;
+
+    if (e.key === '?') {
+        e.preventDefault();
+        const modal = document.getElementById('shortcuts-modal');
+        if (modal) {
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+        return;
+    }
+
+    if (e.key >= '1' && e.key <= '7') {
+        const hashes = ['dashboard', 'contacts', 'coach', 'skills', 'archive', 'journal', 'news'];
+        const targetHash = hashes[parseInt(e.key) - 1];
+        if (targetHash) {
+            e.preventDefault();
+            window.location.hash = `#${targetHash}`;
+        }
+        return;
+    }
+
+    if (e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        window.location.hash = '#dashboard';
+        return;
+    }
+    if (e.key.toLowerCase() === 'c') {
+        e.preventDefault();
+        window.location.hash = '#contacts';
+        return;
+    }
+
+    if (document.activeElement && document.activeElement.classList.contains('nav-item')) {
+        const navs = Array.from(document.querySelectorAll('.nav-item'));
+        let idx = navs.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            navs[(idx + 1) % navs.length].focus();
+            return;
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            navs[(idx - 1 + navs.length) % navs.length].focus();
+            return;
+        }
+    }
+
+    if (e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        const modal = document.getElementById('zone-modal');
+        if (modal) {
+            if (modal.style.display === 'none' || modal.style.display === '') {
+                showZoneModal();
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+        return;
+    }
+
+    const currentHash = window.location.hash.replace('#', '') || 'dashboard';
+
+    // Dashboard Goals Specific
+    if (currentHash === 'dashboard') {
+        if (e.key.toLowerCase() === 'n') {
+            const addIn = document.getElementById('new-goal-text');
+            if (addIn) {
+                e.preventDefault();
+                addIn.focus();
+            }
+            return;
+        }
+        if (e.shiftKey) {
+            if (e.key === 'D') {
+                e.preventDefault();
+                document.querySelector('#daily-goals .goal-item')?.focus();
+                return;
+            }
+            if (e.key === 'W') {
+                e.preventDefault();
+                document.querySelector('#weekly-goals .goal-item')?.focus();
+                return;
+            }
+            if (e.key === 'M') {
+                e.preventDefault();
+                document.querySelector('#monthly-goals .goal-item')?.focus();
+                return;
+            }
+        }
+
+        if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'j' || e.key === 'k') {
+            const items = Array.from(document.querySelectorAll('.goal-item'));
+            if (items.length > 0) {
+                let idx = items.indexOf(document.activeElement);
+                if (idx === -1) {
+                    const parentItem = document.activeElement.closest('.goal-item');
+                    if (parentItem) idx = items.indexOf(parentItem);
+                }
+                if (idx !== -1) {
+                    e.preventDefault();
+                    let nextIdx = (e.key === 'ArrowDown' || e.key === 'j') ? (idx + 1) % items.length : (idx - 1 + items.length) % items.length;
+                    items[nextIdx].focus();
+                    return;
+                }
+            }
+        }
+
+        if (document.activeElement && document.activeElement.classList.contains('goal-item')) {
+            const card = document.activeElement;
+            const chk = card.querySelector('input[type="checkbox"]');
+            const span = card.querySelector('.goal-text');
+
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (chk) {
+                    chk.checked = !chk.checked;
+                    chk.dispatchEvent(new Event('change'));
+                }
+                return;
+            }
+            if (e.key.toLowerCase() === 'e' || e.key === 'F2') {
+                e.preventDefault();
+                if (span) {
+                    span.focus();
+                    document.execCommand('selectAll', false, null);
+                }
+                return;
+            }
+            if (e.key === 'Delete') {
+                e.preventDefault();
+                const trash = card.querySelector('.ph-trash');
+                if (trash) trash.click();
+                return;
+            }
+        }
+    }
+
+    // Contacts Specific
+    if (currentHash === 'contacts') {
+        if (e.key.toLowerCase() === 'n') {
+            const addIn = document.querySelector('.linear-column input[id^="add-"]');
+            if (addIn) {
+                e.preventDefault();
+                addIn.focus();
+            }
+            return;
+        }
+
+        if (document.activeElement && document.activeElement.classList.contains('target-card')) {
+            const card = document.activeElement;
+            const idx = parseInt(card.dataset.idx);
+            const key = card.dataset.key;
+
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (window._pickedContactIndex === undefined || window._pickedContactIndex === null) {
+                    window._pickedContactIndex = idx;
+                    window._pickedContactKey = key;
+                    card.classList.add('keyboard-picked');
+                    announce(`Picked up ${card.querySelector('.target-card-name').textContent.trim() || 'unnamed'}. Use Up/Down arrows to reorder.`);
+                } else if (window._pickedContactIndex === idx && window._pickedContactKey === key) {
+                    window._pickedContactIndex = null;
+                    window._pickedContactKey = null;
+                    card.classList.remove('keyboard-picked');
+                    announce(`Dropped card.`);
+                }
+                return;
+            }
+
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                if (window._pickedContactIndex === idx && window._pickedContactKey === key) {
+                    e.preventDefault();
+                    const d = getData();
+                    const items = d[key] || [];
+                    const toIdx = e.key === 'ArrowUp' ? idx - 1 : idx + 1;
+                    if (toIdx >= 0 && toIdx < items.length) {
+                        const temp = d[key][idx];
+                        d[key][idx] = d[key][toIdx];
+                        d[key][toIdx] = temp;
+                        saveData(d);
+
+                        window._pickedContactIndex = toIdx;
+                        renderContacts(document.getElementById('view-container'));
+
+                        const nextCard = document.querySelector(`.target-card[data-key="${key}"][data-idx="${toIdx}"]`);
+                        if (nextCard) {
+                            nextCard.focus();
+                            nextCard.classList.add('keyboard-picked');
+                        }
+                        announce(`Moved ${temp.name || 'item'} to position ${toIdx + 1}.`);
+                    }
+                    return;
+                }
+            }
+
+            if (e.key.toLowerCase() === 'e' || e.key === 'Enter') {
+                e.preventDefault();
+                const nameIn = card.querySelector('.target-card-name');
+                if (nameIn) {
+                    nameIn.focus();
+                    document.execCommand('selectAll', false, null);
+                }
+                return;
+            }
+
+            if (e.key === '+' && e.ctrlKey) {
+                e.preventDefault();
+                const addBtn = card.querySelector('.add-field-btn');
+                if (addBtn) addBtn.click();
+                return;
+            }
+
+            if (e.key === 'Delete') {
+                e.preventDefault();
+                const delBtn = card.querySelector('.target-card-delete');
+                if (delBtn) delBtn.click();
+                return;
+            }
+        }
+    }
+
+    // Journal Specific
+    if (currentHash === 'journal') {
+        if (e.key.toLowerCase() === 'n') {
+            const addIn = document.getElementById('j-new-title');
+            if (addIn) {
+                e.preventDefault();
+                addIn.focus();
+            }
+            return;
+        }
+
+        if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+            const notes = Array.from(document.querySelectorAll('.journal-note'));
+            if (notes.length > 0) {
+                e.preventDefault();
+                let idx = notes.indexOf(document.activeElement);
+                if (idx === -1) {
+                    const parentNote = document.activeElement.closest('.journal-note');
+                    if (parentNote) idx = notes.indexOf(parentNote);
+                }
+                let nextIdx = e.key === 'ArrowDown' ? (idx + 1) % notes.length : (idx - 1 + notes.length) % notes.length;
+                notes[nextIdx].focus();
+            }
+        }
+    }
+});
