@@ -2003,7 +2003,7 @@ function renderJournal(container) {
                             </div>
                         </div>
                         <div class="toolbar-right">
-                            <button class="composer-close-btn" id="j-comp-close">Close</button>
+                            <button class="composer-close-btn" id="j-comp-close">Create</button>
                         </div>
                     </div>
                 </div>
