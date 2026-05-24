@@ -1901,7 +1901,7 @@ const NotionEditor = {
             const range = selection.getRangeAt(0);
             const parent = range.commonAncestorContainer.nodeType === 3 ? range.commonAncestorContainer.parentNode : range.commonAncestorContainer;
             
-            if (parent.closest('.notion-block')) {
+            if (parent.closest('.editor-root')) {
                 const rect = range.getBoundingClientRect();
                 toolbar.style.left = `${rect.left + rect.width / 2}px`;
                 toolbar.style.top = `${rect.top - 8}px`;
@@ -1912,24 +1912,33 @@ const NotionEditor = {
         toolbar.classList.remove('active');
     },
 
-    getCurrentBlock() {
+    getCurrentBlock(root) {
         const selection = window.getSelection();
         if (!selection.rangeCount) return null;
         let node = selection.getRangeAt(0).startContainer;
         if (node.nodeType === 3) node = node.parentNode;
-        // In a contenteditable, the block is usually the nearest div
-        return node.closest('div:not(.notion-block)') || node; 
+        
+        const block = node.closest('div');
+        return block;
     },
 
     handleInput(e) {
-        if (!e.target.classList || !e.target.classList.contains('notion-block')) return;
+        if (!e.target.classList || !e.target.classList.contains('editor-root')) return;
         
         const selection = window.getSelection();
         if (!selection.rangeCount) return;
         
-        const block = this.getCurrentBlock();
-        if (!block || block === e.target) return; // Wait until they are in a sub-div
+        let block = this.getCurrentBlock(e.target);
+        if (!block) return;
 
+        // If the active block is the editor root itself, force the browser to wrap the current line in a div
+        if (block === e.target) {
+            document.execCommand('formatBlock', false, 'DIV');
+            block = this.getCurrentBlock(e.target);
+            if (block === e.target) return; // fail-safe
+        }
+
+        block.classList.add('notion-block');
         const text = block.textContent;
 
         // Auto-markdown conversion
@@ -1949,7 +1958,7 @@ const NotionEditor = {
         else if (text === '* ' || text === '- ') { block.className = 'notion-bullet'; converted = true; }
         else if (text === '1. ') { block.className = 'notion-number'; converted = true; }
         else if (text === '[] ') { 
-            block.className = 'notion-todo';
+            block.className = 'notion-block notion-todo';
             block.innerHTML = '<input type="checkbox"><span contenteditable="true"></span>';
             selection.collapse(block.querySelector('span'), 0);
             return;
@@ -1983,24 +1992,25 @@ const NotionEditor = {
         delete block.dataset.slashTarget;
         block.textContent = ''; // clear the slash
 
-        if (type === 'h1') block.className = 'notion-h1';
-        else if (type === 'h2') block.className = 'notion-h2';
-        else if (type === 'h3') block.className = 'notion-h3';
-        else if (type === 'quote') block.className = 'notion-quote';
-        else if (type === 'bullet') block.className = 'notion-bullet';
-        else if (type === 'number') block.className = 'notion-number';
+        if (type === 'h1') block.className = 'notion-block notion-h1';
+        else if (type === 'h2') block.className = 'notion-block notion-h2';
+        else if (type === 'h3') block.className = 'notion-block notion-h3';
+        else if (type === 'quote') block.className = 'notion-block notion-quote';
+        else if (type === 'bullet') block.className = 'notion-block notion-bullet';
+        else if (type === 'number') block.className = 'notion-block notion-number';
         else if (type === 'divider') {
             block.innerHTML = '<hr class="notion-divider" contenteditable="false">';
             const newBlock = document.createElement('div');
+            newBlock.className = 'notion-block';
             newBlock.innerHTML = '<br>';
             block.parentNode.insertBefore(newBlock, block.nextSibling);
         }
         else if (type === 'todo') {
-            block.className = 'notion-todo';
+            block.className = 'notion-block notion-todo';
             block.innerHTML = '<input type="checkbox"><span contenteditable="true"></span>';
         }
         else {
-            block.className = ''; // standard text
+            block.className = 'notion-block'; // standard text
         }
         
         if (type !== 'divider') {
@@ -2067,7 +2077,7 @@ function renderJournal(container) {
         let sectionHeader = sectionTitle ? `<div class="journal-section-label">${sectionTitle}</div>` : '';
         
         const gridHtml = notes.map(note => {
-            let bodyHTML = `<div class="journal-note-body notion-block" contenteditable="true" data-id="${note.id}" data-placeholder="Note">${note.body}</div>`;
+            let bodyHTML = `<div class="journal-note-body editor-root" contenteditable="true" data-id="${note.id}" data-placeholder="Note">${note.body}</div>`;
 
             return `
             <div class="journal-note" style="background:${note.color};" tabindex="0" role="listitem" aria-label="Journal entry">
@@ -2135,7 +2145,7 @@ function renderJournal(container) {
                         </button>
                     </div>
                     
-                    <div id="j-comp-body" contenteditable="true" class="composer-body-input notion-block" data-placeholder="${draft.isChecklist ? 'List item...' : 'Take a note...'}">${draft.body}</div>
+                    <div id="j-comp-body" contenteditable="true" class="composer-body-input editor-root" data-placeholder="${draft.isChecklist ? 'List item...' : 'Take a note...'}">${draft.body}</div>
                     
                     <div class="composer-toolbar">
                         <div class="toolbar-left">
