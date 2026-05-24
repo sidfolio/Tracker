@@ -1921,27 +1921,32 @@ body.layout-compact .main-content {
 
 /* Lists */
 .notion-bullet {
-    display: flex;
-    align-items: flex-start;
+    position: relative;
+    padding-left: 1.2em;
 }
 .notion-bullet::before {
-    content: "•";
-    margin-right: 8px;
+    content: "\2022"; /* Bullet character */
+    position: absolute;
+    left: 0;
+    top: 0;
     font-size: 1.2em;
     line-height: 1.2;
     color: var(--text-primary);
 }
 
 .notion-number {
-    display: flex;
-    align-items: flex-start;
+    position: relative;
+    padding-left: 1.2em;
     counter-increment: notion-num;
 }
 .notion-number::before {
-    content: counter(notion-num) ". ";
-    margin-right: 8px;
-    color: var(--text-secondary);
-    min-width: 1.2em;
+    content: counter(notion-num) ".";
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 0.95em;
+    line-height: 1.5;
+    color: var(--text-primary);
 }
 
 .notion-todo {
