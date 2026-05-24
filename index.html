@@ -42,7 +42,7 @@
         // Signal that firebase is ready
         window.dispatchEvent(new Event('firebaseReady'));
     </script>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <style id="blueprint-grid-overrides">
         /* Remove outer double border framing */
         .linear-column {
@@ -52,13 +52,25 @@
             border-radius: 0 !important;
         }
 
-        /* Force target cards inside tabs to layout side-by-side in a responsive CSS Grid */
+        /* Force target cards inside tabs to layout side-by-side in a responsive CSS Grid (exactly 3 per row) */
         .target-cards-grid {
             display: grid !important;
-            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+            grid-template-columns: repeat(3, 1fr) !important;
             gap: 20px !important;
             width: 100% !important;
             box-sizing: border-box !important;
+        }
+
+        @media (max-width: 1100px) {
+            .target-cards-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+
+        @media (max-width: 680px) {
+            .target-cards-grid {
+                grid-template-columns: 1fr !important;
+            }
         }
 
         /* Ensure cards fill exactly one grid column and stretch fluidly */
@@ -283,7 +295,7 @@
 <!-- Screen Reader Live Announcements -->
 <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<script src="data.js?v=3"></script>
-<script src="app.js?v=3"></script>
+<script src="data.js?v=4"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>
