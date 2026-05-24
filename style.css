@@ -758,13 +758,6 @@ button.ghost:hover { background: var(--border-strong); }
     .content-grid, .content-grid-3 { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 480px) {
-    .target-card {
-        width: 290px !important;
-        flex: 0 0 290px !important;
-    }
-}
-
 @media (max-width: 700px) {
     .app-container { flex-direction: column; }
     .sidebar {
@@ -1219,9 +1212,7 @@ button.ghost:hover { background: var(--border-strong); }
     gap: 14px !important;
     position: relative !important;
     transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition) !important;
-    width: 360px !important;
-    flex: 0 0 360px !important;
-    scroll-snap-align: start !important;
+    width: 100% !important;
     box-sizing: border-box !important;
 }
 .target-card:hover {
@@ -1530,29 +1521,12 @@ button.ghost:hover { background: var(--border-strong); }
     color: #000 !important;
 }
 
-/* ==================== TARGET BOARD RESPONSIVE GRID ==================== */
 .target-cards-grid {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
     gap: 20px !important;
-    padding: 10px 4px 20px 4px !important;
     width: 100% !important;
-    scroll-snap-type: x mandatory !important;
-    scrollbar-width: thin !important;
-}
-
-.target-cards-grid::-webkit-scrollbar {
-    height: 6px !important;
-}
-
-.target-cards-grid::-webkit-scrollbar-track {
-    background: transparent !important;
-}
-
-.target-cards-grid::-webkit-scrollbar-thumb {
-    background: var(--border-strong) !important;
-    border-radius: 10px !important;
+    box-sizing: border-box !important;
 }
 
 /* ==================== WCAG 2.2 AA COMPLIANCE & VISIBLE FOCUS ==================== */
