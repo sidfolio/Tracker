@@ -1520,10 +1520,9 @@ button.ghost:hover { background: var(--border-strong); }
     background: var(--accent) !important;
     color: #000 !important;
 }
-
 .target-cards-grid {
     display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    grid-template-columns: repeat(3, 1fr) !important;
     gap: 20px !important;
     width: 100% !important;
     box-sizing: border-box !important;
