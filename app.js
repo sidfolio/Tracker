@@ -921,10 +921,7 @@ function renderContacts(container) {
             }).join('')}
         </div>
         
-        <div class="linear-list-board" style="display:block; width:100%;">
-            <div class="linear-column" style="background:transparent; border:none; padding:0; width:100%;">
-                <!-- CARDS GRID -->
-                <div class="target-cards-grid" id="col-${activeCat.key}" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; width:100%; box-sizing:border-box;">
+        <div id="col-${activeCat.key}" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; width:100%; box-sizing:border-box; margin-bottom:20px;">
                     ${items.length === 0 ? `
                         <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border: 1px dashed var(--border); border-radius: var(--radius-md);">
                             <i class="ph ph-folder-open" style="font-size: 2rem; margin-bottom: 8px; display: block; color: var(--text-muted);"></i>
@@ -944,9 +941,9 @@ function renderContacts(container) {
                                         <i class="ph ph-trash target-card-delete" title="Delete" tabindex="0" role="button" aria-label="Delete ${item.name || 'item'}"></i>
                                     </div>
                                 </div>
-                                
+
                                 <!-- DYNAMIC FIELDS (UP TO 10) -->
-                                <div class="target-card-fields" style="display:flex; flex-direction:column; gap:8px; margin-top: 6px; margin-bottom: 6px;">
+                                <div class="target-card-fields" style="display:flex; flex-direction:column; gap:8px; margin-top:6px; margin-bottom:6px;">
                                     ${fields.map((f, fIdx) => `
                                         <div class="target-card-field-row" data-fidx="${fIdx}">
                                             <i class="ph ${getIconForFieldLabel(f.label, f.value)} target-card-link-icon"></i>
@@ -970,7 +967,7 @@ function renderContacts(container) {
                                     `).join('')}
                                 </div>
 
-                                <div class="target-card-footer" style="display:flex; align-items:center; justify-content:space-between; margin-top:2px; margin-bottom:8px; padding: 0 4px;">
+                                <div class="target-card-footer" style="display:flex; align-items:center; justify-content:space-between; margin-top:2px; margin-bottom:8px; padding:0 4px;">
                                     ${fields.length < 10 ? `
                                         <div class="add-field-btn" style="cursor:pointer; font-size:0.72rem; color:var(--accent); font-weight:600; display:inline-flex; align-items:center; gap:4px;" title="Add input field (up to 10)">
                                             <i class="ph ph-plus-circle"></i> Add Field
@@ -979,36 +976,33 @@ function renderContacts(container) {
                                 </div>
 
                                 <div class="target-card-desc" contenteditable="true" placeholder="Add description..." data-field="description">${item.description || ''}</div>
-                            </div>
+                            </article>
                         `;
                     }).join('')}
-                </div>
-                
-                <!-- ADD BAR AT BOTTOM OF ACTIVE GRID -->
-                <div class="input-group" style="margin-top:auto; padding-top:16px; border-top:1px solid var(--border); display:flex; gap:8px; max-width:480px; width:100%;">
-                    <input type="text" id="add-${activeCat.key}" placeholder="${activeCat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; flex:1; box-sizing:border-box;">
-                    <button data-cat="${activeCat.key}" class="add-target-btn">
-                        <i class="ph ph-plus" style="font-weight:700;"></i> Add Item
-                    </button>
-                </div>
-            </div>
+        </div>
+
+        <!-- ADD BAR -->
+        <div style="padding-top:16px; border-top:1px solid var(--border); display:flex; gap:8px; max-width:480px; width:100%;">
+            <input type="text" id="add-${activeCat.key}" placeholder="${activeCat.placeholder}" style="background:var(--bg-surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 12px; flex:1; box-sizing:border-box;">
+            <button data-cat="${activeCat.key}" class="add-target-btn">
+                <i class="ph ph-plus" style="font-weight:700;"></i> Add Item
+            </button>
         </div>`;
 
     container.innerHTML = html;
 
-    // ── FORCE 3-COL GRID (setProperty !important beats ALL stylesheet rules) ──
+    // Re-apply grid via JS to ensure nothing overrides it
     const _grid = document.getElementById('col-' + activeKey);
     if (_grid) {
-        _grid.style.setProperty('display',                'grid',                         'important');
-        _grid.style.setProperty('grid-template-columns',  'repeat(3, minmax(0, 1fr))',    'important');
-        _grid.style.setProperty('gap',                    '20px',                         'important');
-        _grid.style.setProperty('width',                  '100%',                         'important');
-        _grid.style.setProperty('box-sizing',             'border-box',                   'important');
+        _grid.style.setProperty('display',               'grid',                      'important');
+        _grid.style.setProperty('grid-template-columns', 'repeat(3,minmax(0,1fr))',   'important');
+        _grid.style.setProperty('gap',                   '20px',                      'important');
+        _grid.style.setProperty('width',                 '100%',                      'important');
+        _grid.style.setProperty('box-sizing',            'border-box',                'important');
     }
 
     // Event delegation for blur (auto-saving)
-    const cardBoard = container.querySelector('.linear-list-board');
-    cardBoard.addEventListener('blur', (e) => {
+    container.addEventListener('blur', (e) => {
         const target = e.target;
         if (!target.hasAttribute('data-field')) return;
 
@@ -1306,7 +1300,7 @@ function renderContacts(container) {
     });
 
     // Enter Key on Inputs to Add Item (Defensive Sibling Fallback included)
-    container.querySelectorAll('.linear-column input').forEach(input => {
+    container.querySelectorAll('input[id^="add-"]').forEach(input => {
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 const cat = input.id ? input.id.replace('add-', '') : '';
