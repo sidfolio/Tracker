@@ -921,10 +921,10 @@ function renderContacts(container) {
             }).join('')}
         </div>
         
-        <div class="linear-list-board" style="display:flex; flex-direction:column; gap:20px; width:100%;">
-            <div class="linear-column" style="display:flex; flex-direction:column; gap:20px; width:100%; box-sizing:border-box;">
+        <div class="linear-list-board" style="display:block; width:100%;">
+            <div class="linear-column" style="background:transparent; border:none; padding:0; width:100%;">
                 <!-- CARDS GRID -->
-                <div class="target-cards-grid" id="col-${activeCat.key}">
+                <div class="target-cards-grid" id="col-${activeCat.key}" style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; width:100%; box-sizing:border-box;">
                     ${items.length === 0 ? `
                         <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border: 1px dashed var(--border); border-radius: var(--radius-md);">
                             <i class="ph ph-folder-open" style="font-size: 2rem; margin-bottom: 8px; display: block; color: var(--text-muted);"></i>
