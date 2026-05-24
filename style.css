@@ -548,10 +548,10 @@ button.ghost:hover { background: var(--border-strong); }
 }
 
 .linear-column {
-    background: var(--bg-card);
-    border-radius: var(--radius-md);
-    padding: 20px 24px;
-    border: 1px solid var(--border);
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
 }
 
 .linear-header {
@@ -756,6 +756,13 @@ button.ghost:hover { background: var(--border-strong); }
 @media (max-width: 900px) {
     .stat-row { grid-template-columns: repeat(2, 1fr); }
     .content-grid, .content-grid-3 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    .target-card {
+        width: 290px !important;
+        flex: 0 0 290px !important;
+    }
 }
 
 @media (max-width: 700px) {
@@ -1205,19 +1212,22 @@ button.ghost:hover { background: var(--border-strong); }
 .target-card {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
-    border-radius: var(--radius-md) !important;
-    padding: 14px 16px !important;
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 8px !important;
+    border-radius: var(--radius-lg) !important;
+    padding: 20px !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
     position: relative !important;
-    transition: border-color var(--transition), box-shadow var(--transition) !important;
-    width: 100% !important;
+    transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition) !important;
+    width: 360px !important;
+    flex: 0 0 360px !important;
+    scroll-snap-align: start !important;
     box-sizing: border-box !important;
 }
 .target-card:hover {
-    border-color: var(--accent-light) !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    border-color: var(--accent) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+    transform: translateY(-2px) !important;
 }
 
 .target-card-header {
@@ -1225,11 +1235,14 @@ button.ghost:hover { background: var(--border-strong); }
     align-items: center !important;
     justify-content: space-between !important;
     gap: 12px !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 2px !important;
 }
 
 .target-card-name {
-    font-size: 0.95rem !important;
-    font-weight: 600 !important;
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
     color: var(--text-primary) !important;
     border: none !important;
     outline: none !important;
@@ -1237,6 +1250,7 @@ button.ghost:hover { background: var(--border-strong); }
     width: 100% !important;
     padding: 2px 0 !important;
     min-height: 1.2em !important;
+    letter-spacing: -0.01em !important;
 }
 
 .target-card-delete {
@@ -1271,7 +1285,6 @@ button.ghost:hover { background: var(--border-strong); }
     flex-shrink: 0 !important;
 }
 .target-card-link-text {
-    flex-grow: 1 !important;
     border: none !important;
     outline: none !important;
     background: transparent !important;
@@ -1281,6 +1294,9 @@ button.ghost:hover { background: var(--border-strong); }
     overflow: hidden !important;
     text-overflow: ellipsis !important;
     min-height: 1.1em !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
 }
 .target-card-link-text:focus {
     color: var(--text-primary) !important;
@@ -1294,21 +1310,25 @@ button.ghost:hover { background: var(--border-strong); }
     justify-content: center !important;
 }
 .target-card-link-go:hover {
-    color: var(--accent-light) !important;
+    color: var(--accent) !important;
 }
 
 .target-card-desc {
     font-size: 0.83rem !important;
     color: var(--text-secondary) !important;
-    line-height: 1.45 !important;
-    border: none !important;
+    line-height: 1.5 !important;
+    border: 1px solid var(--border) !important;
     outline: none !important;
-    background: transparent !important;
-    padding: 4px 0 !important;
-    min-height: 24px !important;
+    background: rgba(255, 255, 255, 0.015) !important;
+    padding: 10px 12px !important;
+    border-radius: var(--radius-sm) !important;
+    min-height: 54px !important;
+    transition: all var(--transition) !important;
 }
 .target-card-desc:focus {
     color: var(--text-primary) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border-color: var(--accent) !important;
 }
 
 /* Placeholders for editable fields */
@@ -1388,15 +1408,18 @@ button.ghost:hover { background: var(--border-strong); }
 
 /* ==================== DYNAMIC INPUT FIELDS & SELECTION ==================== */
 .target-card-field-row {
-    display: flex !important;
+    display: grid !important;
+    grid-template-columns: 20px 84px 1fr 24px 24px !important;
     align-items: center !important;
     gap: 8px !important;
     background: rgba(255, 255, 255, 0.02) !important;
-    padding: 4px 8px !important;
+    padding: 6px 10px !important;
     border-radius: var(--radius-sm) !important;
     border: 1px solid transparent !important;
     transition: all var(--transition) !important;
     position: relative !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
 }
 
 .target-card-field-row:hover {
@@ -1416,7 +1439,8 @@ button.ghost:hover { background: var(--border-strong); }
     cursor: pointer !important;
     transition: all var(--transition) !important;
     font-family: inherit !important;
-    width: 78px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .target-card-field-label:hover {
@@ -1508,10 +1532,27 @@ button.ghost:hover { background: var(--border-strong); }
 
 /* ==================== TARGET BOARD RESPONSIVE GRID ==================== */
 .target-cards-grid {
-    display: grid !important;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
-    gap: 16px !important;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 20px !important;
+    padding: 10px 4px 20px 4px !important;
     width: 100% !important;
+    scroll-snap-type: x mandatory !important;
+    scrollbar-width: thin !important;
+}
+
+.target-cards-grid::-webkit-scrollbar {
+    height: 6px !important;
+}
+
+.target-cards-grid::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.target-cards-grid::-webkit-scrollbar-thumb {
+    background: var(--border-strong) !important;
+    border-radius: 10px !important;
 }
 
 /* ==================== WCAG 2.2 AA COMPLIANCE & VISIBLE FOCUS ==================== */

@@ -946,7 +946,7 @@ function renderContacts(container) {
                                 </div>
                                 
                                 <!-- DYNAMIC FIELDS (UP TO 10) -->
-                                <div class="target-card-fields" style="display:flex; flex-direction:column; gap:6px; margin-top: 4px; margin-bottom: 6px;">
+                                <div class="target-card-fields" style="display:flex; flex-direction:column; gap:8px; margin-top: 6px; margin-bottom: 6px;">
                                     ${fields.map((f, fIdx) => `
                                         <div class="target-card-field-row" data-fidx="${fIdx}">
                                             <i class="ph ${getIconForFieldLabel(f.label, f.value)} target-card-link-icon"></i>
@@ -960,8 +960,12 @@ function renderContacts(container) {
                                                 <option value="Other" ${f.label === 'Other' ? 'selected' : ''}>Other</option>
                                             </select>
                                             <div class="target-card-link-text" contenteditable="true" placeholder="Enter details..." data-field="field-value">${f.value || ''}</div>
-                                            ${f.value ? `<a href="${getFieldURL(f.label, f.value)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
-                                            <i class="ph ph-x remove-field-btn" title="Remove field"></i>
+                                            <div style="display:flex; align-items:center; justify-content:center; width:24px; height:24px; flex-shrink:0;">
+                                                ${f.value ? `<a href="${getFieldURL(f.label, f.value)}" target="_blank" class="target-card-link-go" title="Open Link"><i class="ph ph-arrow-square-out"></i></a>` : ''}
+                                            </div>
+                                            <div style="display:flex; align-items:center; justify-content:center; width:24px; height:24px; flex-shrink:0;">
+                                                <i class="ph ph-x remove-field-btn" title="Remove field"></i>
+                                            </div>
                                         </div>
                                     `).join('')}
                                 </div>
