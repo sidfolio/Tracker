@@ -1935,7 +1935,25 @@ const NotionEditor = {
         if (block === e.target) {
             document.execCommand('formatBlock', false, 'DIV');
             block = this.getCurrentBlock(e.target);
-            if (block === e.target) return; // fail-safe
+            if (block === e.target) {
+                // Fallback: manually wrap the text node
+                const textNode = selection.anchorNode;
+                if (textNode && textNode.nodeType === 3 && textNode.parentNode === e.target) {
+                    const div = document.createElement('div');
+                    div.textContent = textNode.textContent;
+                    e.target.replaceChild(div, textNode);
+                    
+                    const range = document.createRange();
+                    range.setStart(div.firstChild, div.textContent.length);
+                    range.collapse(true);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    
+                    block = div;
+                } else {
+                    return; // Fail-safe abort
+                }
+            }
         }
 
         block.classList.add('notion-block');
@@ -2035,7 +2053,7 @@ const NotionEditor = {
     }
 };
 
-document.addEventListener('firebaseReady', () => {
+document.addEventListener('DOMContentLoaded', () => {
     NotionEditor.init();
 });
 
