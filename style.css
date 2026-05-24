@@ -1827,3 +1827,223 @@ body.layout-compact .main-content {
     padding: 16px 20px !important;
 }
 
+/* ======================== NOTION LITE EDITOR & SHORTCUTS ======================== */
+
+/* --- KBD Shortcuts --- */
+.kbd-shortcut {
+    display: inline-block;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 4px;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    margin-left: 6px;
+    vertical-align: middle;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+/* --- Notion Block Styles --- */
+.notion-block {
+    margin: 4px 0;
+    padding: 2px 0;
+    line-height: 1.5;
+    position: relative;
+    outline: none;
+    min-height: 1.5em; /* Ensure empty blocks are clickable */
+}
+
+/* Fix for contenteditable empty divs collapsing */
+.notion-block:empty::before {
+    content: '\200B'; /* Zero-width space */
+}
+
+.notion-h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-top: 1.2em;
+    margin-bottom: 0.3em;
+    line-height: 1.2;
+}
+.notion-h2 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-top: 1em;
+    margin-bottom: 0.3em;
+    line-height: 1.3;
+}
+.notion-h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 0.8em;
+    margin-bottom: 0.3em;
+}
+
+.notion-quote {
+    border-left: 3px solid var(--text-primary);
+    padding-left: 12px;
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin: 12px 0;
+}
+
+.notion-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+    border: none;
+    user-select: none;
+}
+.notion-divider[contenteditable="true"] {
+    cursor: default;
+}
+
+/* Lists */
+.notion-bullet {
+    display: flex;
+    align-items: flex-start;
+}
+.notion-bullet::before {
+    content: "•";
+    margin-right: 8px;
+    font-size: 1.2em;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.notion-number {
+    display: flex;
+    align-items: flex-start;
+    counter-increment: notion-num;
+}
+.notion-number::before {
+    content: counter(notion-num) ". ";
+    margin-right: 8px;
+    color: var(--text-secondary);
+    min-width: 1.2em;
+}
+
+.notion-todo {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+.notion-todo input[type="checkbox"] {
+    margin-top: 4px;
+    cursor: pointer;
+    accent-color: var(--text-muted);
+}
+.notion-todo.checked {
+    text-decoration: line-through;
+    opacity: 0.5;
+}
+
+/* Container to reset counter */
+.journal-note-body, .composer-body-input {
+    counter-reset: notion-num;
+}
+
+/* --- Floating Toolbar --- */
+.notion-floating-toolbar {
+    position: absolute;
+    background: var(--bg-card); /* Keep it slightly lighter than deep dark */
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    padding: 4px;
+    display: none;
+    align-items: center;
+    gap: 2px;
+    z-index: 1000;
+    transform: translateX(-50%) translateY(-100%);
+    margin-top: -10px;
+}
+.notion-floating-toolbar.active {
+    display: flex;
+}
+.notion-floating-toolbar::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: var(--bg-card) transparent transparent transparent;
+}
+
+.toolbar-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-family: var(--font-serif);
+    font-weight: bold;
+    min-width: 32px;
+    transition: background 0.1s, color 0.1s;
+}
+.toolbar-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+.toolbar-btn i {
+    font-size: 1.1rem;
+}
+
+/* --- Slash Command Menu --- */
+.slash-command-menu {
+    position: absolute;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    min-width: 240px;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1000;
+    padding: 6px;
+}
+.slash-command-menu.active {
+    display: block;
+}
+.slash-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text-primary);
+}
+.slash-item:hover, .slash-item.selected {
+    background: rgba(255, 255, 255, 0.05);
+}
+.slash-item-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+.slash-item-content {
+    display: flex;
+    flex-direction: column;
+}
+.slash-item-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+.slash-item-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}

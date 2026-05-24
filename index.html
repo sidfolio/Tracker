@@ -42,7 +42,7 @@
         // Signal that firebase is ready
         window.dispatchEvent(new Event('firebaseReady'));
     </script>
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=11">
     <style id="blueprint-grid-overrides">
         /* Remove outer double border framing */
         .linear-column {
@@ -198,25 +198,25 @@
         <nav class="sidebar-nav" aria-labelledby="menu-nav-label" role="navigation">
             <div role="list" style="display:flex; flex-direction:column; gap:4px; width:100%;">
                 <a href="#dashboard" class="nav-item active" id="nav-dashboard" role="listitem" aria-current="page">
-                    <i class="ph ph-squares-four" aria-hidden="true"></i> Dashboard
+                    <i class="ph ph-squares-four" aria-hidden="true"></i> Dashboard <kbd class="kbd-shortcut">1</kbd>
                 </a>
                 <a href="#contacts" class="nav-item" id="nav-contacts" role="listitem">
-                    <i class="ph ph-address-book" aria-hidden="true"></i> Contacts
+                    <i class="ph ph-address-book" aria-hidden="true"></i> Contacts <kbd class="kbd-shortcut">2</kbd>
                 </a>
                 <a href="#coach" class="nav-item" id="nav-coach" role="listitem">
-                    <i class="ph ph-brain" aria-hidden="true"></i> Life Coach
+                    <i class="ph ph-brain" aria-hidden="true"></i> Life Coach <kbd class="kbd-shortcut">3</kbd>
                 </a>
                 <a href="#skills" class="nav-item" id="nav-skills" role="listitem">
-                    <i class="ph ph-graduation-cap" aria-hidden="true"></i> Skills & Gaps
+                    <i class="ph ph-graduation-cap" aria-hidden="true"></i> Skills & Gaps <kbd class="kbd-shortcut">4</kbd>
                 </a>
                 <a href="#archive" class="nav-item" id="nav-archive" role="listitem">
-                    <i class="ph ph-archive" aria-hidden="true"></i> Archive
+                    <i class="ph ph-archive" aria-hidden="true"></i> Archive <kbd class="kbd-shortcut">5</kbd>
                 </a>
                 <a href="#journal" class="nav-item" id="nav-journal" role="listitem">
-                    <i class="ph ph-notebook" aria-hidden="true"></i> Journal
+                    <i class="ph ph-notebook" aria-hidden="true"></i> Journal <kbd class="kbd-shortcut">6</kbd>
                 </a>
                 <a href="#news" class="nav-item" id="nav-news" role="listitem">
-                    <i class="ph ph-newspaper" aria-hidden="true"></i> NYC Feed
+                    <i class="ph ph-newspaper" aria-hidden="true"></i> NYC Feed <kbd class="kbd-shortcut">7</kbd>
                 </a>
             </div>
         </nav>
@@ -237,7 +237,10 @@
                 <h1>Hi, Siddharth 👋</h1>
                 <div class="greeting-sub">Your $200k NYC offer awaits. Don't waste today.</div>
             </div>
-            <div class="topbar-right">
+            <div class="topbar-right" style="display:flex; align-items:center; gap:12px;">
+                <button id="topbar-search-btn" style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:100px; padding:6px 12px; color:var(--text-secondary); cursor:pointer; display:flex; align-items:center; gap:8px; font-size:0.85rem;" title="Search & Commands (Ctrl+K)">
+                    <i class="ph ph-magnifying-glass"></i> Search <kbd class="kbd-shortcut" style="margin-left:4px;">Ctrl+K</kbd>
+                </button>
                 <div class="countdown-pill" role="status" aria-live="polite">
                     <div class="countdown-label">Hours Remaining</div>
                     <div class="countdown-value" id="hours-remaining">6,480 <span class="unit">hrs</span></div>
@@ -249,6 +252,80 @@
         <!-- VIEWS -->
         <div id="view-container" tabindex="-1"></div>
     </main>
+</div>
+
+<!-- NOTION EDITOR UI -->
+<div id="notion-floating-toolbar" class="notion-floating-toolbar">
+    <button class="toolbar-btn" data-action="bold" title="Bold (Ctrl+B)">B</button>
+    <button class="toolbar-btn" data-action="italic" style="font-style: italic;" title="Italic (Ctrl+I)">I</button>
+    <button class="toolbar-btn" data-action="underline" style="text-decoration: underline;" title="Underline (Ctrl+U)">U</button>
+    <button class="toolbar-btn" data-action="strikethrough" style="text-decoration: line-through;" title="Strikethrough (Ctrl+Shift+S)">S</button>
+</div>
+
+<div id="slash-command-menu" class="slash-command-menu">
+    <div class="slash-item selected" data-type="text">
+        <div class="slash-item-icon"><i class="ph ph-text-t"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Text</span>
+            <span class="slash-item-desc">Just start writing with plain text.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="h1">
+        <div class="slash-item-icon"><i class="ph ph-text-h-one"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Heading 1</span>
+            <span class="slash-item-desc">Big section heading.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="h2">
+        <div class="slash-item-icon"><i class="ph ph-text-h-two"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Heading 2</span>
+            <span class="slash-item-desc">Medium section heading.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="h3">
+        <div class="slash-item-icon"><i class="ph ph-text-h-three"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Heading 3</span>
+            <span class="slash-item-desc">Small section heading.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="bullet">
+        <div class="slash-item-icon"><i class="ph ph-list-bullets"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Bulleted list</span>
+            <span class="slash-item-desc">Create a simple bulleted list.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="number">
+        <div class="slash-item-icon"><i class="ph ph-list-numbers"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Numbered list</span>
+            <span class="slash-item-desc">Create a list with numbering.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="todo">
+        <div class="slash-item-icon"><i class="ph ph-check-square"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">To-do list</span>
+            <span class="slash-item-desc">Track tasks with a to-do list.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="quote">
+        <div class="slash-item-icon"><i class="ph ph-quotes"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Quote</span>
+            <span class="slash-item-desc">Capture a quote.</span>
+        </div>
+    </div>
+    <div class="slash-item" data-type="divider">
+        <div class="slash-item-icon"><i class="ph ph-minus"></i></div>
+        <div class="slash-item-content">
+            <span class="slash-item-title">Divider</span>
+            <span class="slash-item-desc">Visually divide blocks.</span>
+        </div>
+    </div>
 </div>
 
 <!-- TOASTS -->
@@ -283,7 +360,7 @@
 <!-- Screen Reader Live Announcements -->
 <div id="sr-announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-<script src="data.js?v=10"></script>
-<script src="app.js?v=10"></script>
+<script src="data.js?v=11"></script>
+<script src="app.js?v=11"></script>
 </body>
 </html>

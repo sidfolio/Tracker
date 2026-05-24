@@ -232,6 +232,21 @@ function initFirebase() {
 // ======================== INIT ========================
 document.addEventListener('DOMContentLoaded', () => {
 
+    const searchBtn = document.getElementById('topbar-search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            const modal = document.getElementById('command-palette-modal');
+            if (modal) {
+                modal.style.display = 'flex';
+                document.getElementById('palette-search').value = '';
+                filteredCommands = [...COMMANDS];
+                selectedCommandIdx = 0;
+                renderCommandPalette();
+                document.getElementById('palette-search').focus();
+            }
+        });
+    }
+
     // Firebase banner dismiss
     document.getElementById('dismiss-banner').addEventListener('click', (e) => {
         e.preventDefault();
@@ -1851,6 +1866,169 @@ const style = document.createElement('style');
 style.textContent = `@keyframes spin { to { transform: rotate(360deg); } } .ph-spin { animation: spin 1s linear infinite; display: inline-block; }`;
 document.head.appendChild(style);
 
+// ======================== NOTION LITE EDITOR ENGINE ========================
+const NotionEditor = {
+    init() {
+        document.addEventListener('selectionchange', this.handleSelection.bind(this));
+        document.addEventListener('input', this.handleInput.bind(this));
+        document.addEventListener('keydown', this.handleKeydown.bind(this));
+        
+        // Toolbar actions
+        document.addEventListener('mousedown', (e) => {
+            const btn = e.target.closest('.toolbar-btn');
+            if (btn) {
+                e.preventDefault(); // keep selection active
+                document.execCommand(btn.dataset.action, false, null);
+            }
+        });
+
+        // Slash command actions
+        document.addEventListener('mousedown', (e) => {
+            const slashItem = e.target.closest('.slash-item');
+            if (slashItem) {
+                e.preventDefault();
+                this.executeSlashCommand(slashItem.dataset.type);
+            }
+        });
+    },
+
+    handleSelection() {
+        const selection = window.getSelection();
+        const toolbar = document.getElementById('notion-floating-toolbar');
+        if (!toolbar) return;
+
+        if (!selection.isCollapsed && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const parent = range.commonAncestorContainer.nodeType === 3 ? range.commonAncestorContainer.parentNode : range.commonAncestorContainer;
+            
+            if (parent.closest('.notion-block')) {
+                const rect = range.getBoundingClientRect();
+                toolbar.style.left = `${rect.left + rect.width / 2}px`;
+                toolbar.style.top = `${rect.top - 8}px`;
+                toolbar.classList.add('active');
+                return;
+            }
+        }
+        toolbar.classList.remove('active');
+    },
+
+    getCurrentBlock() {
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return null;
+        let node = selection.getRangeAt(0).startContainer;
+        if (node.nodeType === 3) node = node.parentNode;
+        // In a contenteditable, the block is usually the nearest div
+        return node.closest('div:not(.notion-block)') || node; 
+    },
+
+    handleInput(e) {
+        if (!e.target.classList || !e.target.classList.contains('notion-block')) return;
+        
+        const selection = window.getSelection();
+        if (!selection.rangeCount) return;
+        
+        const block = this.getCurrentBlock();
+        if (!block || block === e.target) return; // Wait until they are in a sub-div
+
+        const text = block.textContent;
+
+        // Auto-markdown conversion
+        let converted = false;
+        if (text === '# ') { block.className = 'notion-h1'; converted = true; }
+        else if (text === '## ') { block.className = 'notion-h2'; converted = true; }
+        else if (text === '### ') { block.className = 'notion-h3'; converted = true; }
+        else if (text === '> ') { block.className = 'notion-quote'; converted = true; }
+        else if (text === '---') { 
+            block.innerHTML = '<hr class="notion-divider" contenteditable="false">'; 
+            const newBlock = document.createElement('div');
+            newBlock.innerHTML = '<br>';
+            block.parentNode.insertBefore(newBlock, block.nextSibling);
+            selection.collapse(newBlock, 0);
+            return;
+        }
+        else if (text === '* ' || text === '- ') { block.className = 'notion-bullet'; converted = true; }
+        else if (text === '1. ') { block.className = 'notion-number'; converted = true; }
+        else if (text === '[] ') { 
+            block.className = 'notion-todo';
+            block.innerHTML = '<input type="checkbox"><span contenteditable="true"></span>';
+            selection.collapse(block.querySelector('span'), 0);
+            return;
+        }
+        
+        // Handle slash command
+        const slashMenu = document.getElementById('slash-command-menu');
+        if (text.startsWith('/')) {
+            const rect = block.getBoundingClientRect();
+            slashMenu.style.left = `${rect.left}px`;
+            slashMenu.style.top = `${rect.bottom + 4}px`;
+            slashMenu.classList.add('active');
+            slashMenu.dataset.blockId = Math.random().toString(); // Tag it
+            block.dataset.slashTarget = slashMenu.dataset.blockId;
+        } else {
+            slashMenu.classList.remove('active');
+        }
+
+        if (converted) {
+            block.textContent = '';
+        }
+    },
+
+    executeSlashCommand(type) {
+        const slashMenu = document.getElementById('slash-command-menu');
+        slashMenu.classList.remove('active');
+        
+        const block = document.querySelector(`div[data-slash-target="${slashMenu.dataset.blockId}"]`);
+        if (!block) return;
+        
+        delete block.dataset.slashTarget;
+        block.textContent = ''; // clear the slash
+
+        if (type === 'h1') block.className = 'notion-h1';
+        else if (type === 'h2') block.className = 'notion-h2';
+        else if (type === 'h3') block.className = 'notion-h3';
+        else if (type === 'quote') block.className = 'notion-quote';
+        else if (type === 'bullet') block.className = 'notion-bullet';
+        else if (type === 'number') block.className = 'notion-number';
+        else if (type === 'divider') {
+            block.innerHTML = '<hr class="notion-divider" contenteditable="false">';
+            const newBlock = document.createElement('div');
+            newBlock.innerHTML = '<br>';
+            block.parentNode.insertBefore(newBlock, block.nextSibling);
+        }
+        else if (type === 'todo') {
+            block.className = 'notion-todo';
+            block.innerHTML = '<input type="checkbox"><span contenteditable="true"></span>';
+        }
+        else {
+            block.className = ''; // standard text
+        }
+        
+        if (type !== 'divider') {
+            block.focus();
+        }
+    },
+
+    handleKeydown(e) {
+        // Toggle checkboxes
+        if (e.target.type === 'checkbox' && e.target.closest('.notion-todo')) {
+            const todo = e.target.closest('.notion-todo');
+            if (e.target.checked) todo.classList.add('checked');
+            else todo.classList.remove('checked');
+            
+            // Trigger save
+            const mainBlock = e.target.closest('.notion-block');
+            if (mainBlock) {
+                const event = new Event('input', { bubbles: true });
+                mainBlock.dispatchEvent(event);
+            }
+        }
+    }
+};
+
+document.addEventListener('firebaseReady', () => {
+    NotionEditor.init();
+});
+
 // ======================== JOURNAL (KEEP CLONE) ========================
 const JOURNAL_COLORS = [
     'var(--bg-card)',                  // Default
@@ -1889,36 +2067,7 @@ function renderJournal(container) {
         let sectionHeader = sectionTitle ? `<div class="journal-section-label">${sectionTitle}</div>` : '';
         
         const gridHtml = notes.map(note => {
-            let bodyHTML = '';
-            if (note.isChecklist) {
-                const lines = note.body.split('\n');
-                
-                // Separate unchecked and checked items
-                const unchecked = [];
-                const checked = [];
-                
-                lines.forEach((l, i) => {
-                    const isChecked = note.checkedLines?.includes(i);
-                    const itemHtml = `
-                        <div class="journal-checklist-item ${isChecked ? 'checked' : ''}">
-                            <input type="checkbox" class="j-check" data-id="${note.id}" data-idx="${i}" ${isChecked ? 'checked' : ''}>
-                            <div class="journal-checklist-text" contenteditable="true" data-id="${note.id}" data-idx="${i}" placeholder="List item">${l}</div>
-                        </div>
-                    `;
-                    if (isChecked) checked.push(itemHtml);
-                    else unchecked.push(itemHtml);
-                });
-
-                bodyHTML = `
-                    <div class="journal-checklist-group">${unchecked.join('')}</div>
-                    ${checked.length > 0 ? `
-                        <div class="journal-checklist-divider"></div>
-                        <div class="journal-checklist-group checked-group">${checked.join('')}</div>
-                    ` : ''}
-                `;
-            } else {
-                bodyHTML = `<div class="journal-note-body" contenteditable="true" data-id="${note.id}" placeholder="Note">${note.body}</div>`;
-            }
+            let bodyHTML = `<div class="journal-note-body notion-block" contenteditable="true" data-id="${note.id}" data-placeholder="Note">${note.body}</div>`;
 
             return `
             <div class="journal-note" style="background:${note.color};" tabindex="0" role="listitem" aria-label="Journal entry">
@@ -1986,7 +2135,7 @@ function renderJournal(container) {
                         </button>
                     </div>
                     
-                    <textarea id="j-comp-body" class="composer-body-input" placeholder="${draft.isChecklist ? 'List item...' : 'Take a note...'}" rows="1">${draft.body}</textarea>
+                    <div id="j-comp-body" contenteditable="true" class="composer-body-input notion-block" data-placeholder="${draft.isChecklist ? 'List item...' : 'Take a note...'}">${draft.body}</div>
                     
                     <div class="composer-toolbar">
                         <div class="toolbar-left">
@@ -2035,7 +2184,7 @@ function renderJournal(container) {
 
     function saveDraft() {
         newNoteState.title = titleIn.value;
-        newNoteState.body = bodyIn.value;
+        newNoteState.body = bodyIn.innerHTML;
         localStorage.setItem('journalDraft', JSON.stringify(newNoteState));
     }
 
@@ -2047,7 +2196,7 @@ function renderJournal(container) {
         expanded.style.display = 'block';
         composer.classList.add('expanded');
         
-        bodyIn.placeholder = newNoteState.isChecklist ? 'List item...' : 'Take a note...';
+        bodyIn.setAttribute('data-placeholder', newNoteState.isChecklist ? 'List item...' : 'Take a note...');
         
         setTimeout(() => bodyIn.focus(), 50);
         saveDraft();
@@ -2055,7 +2204,7 @@ function renderJournal(container) {
 
     function closeComposerAndSave() {
         const title = titleIn.value.trim();
-        const body = bodyIn.value.trim();
+        const body = bodyIn.innerHTML.trim();
         
         if (title || body) {
             const d = getData();
