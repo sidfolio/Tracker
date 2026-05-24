@@ -1522,10 +1522,22 @@ button.ghost:hover { background: var(--border-strong); }
 }
 .target-cards-grid {
     display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 20px !important;
     width: 100% !important;
     box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+    .target-cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 600px) {
+    .target-cards-grid {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 /* ==================== WCAG 2.2 AA COMPLIANCE & VISIBLE FOCUS ==================== */

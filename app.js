@@ -1327,26 +1327,6 @@ function renderContacts(container) {
             }
         });
     });
-
-    // Diagnostic style logger
-    setTimeout(() => {
-        const grid = container.querySelector('.target-cards-grid');
-        const col = container.querySelector('.linear-column');
-        console.log('=== BLUEPRINT DIAGNOSTICS ===');
-        if (grid) {
-            const gridStyle = window.getComputedStyle(grid);
-            console.log('Grid Display:', gridStyle.display);
-            console.log('Grid Columns:', gridStyle.gridTemplateColumns);
-            console.log('Grid Width:', gridStyle.width);
-        } else {
-            console.log('Grid element .target-cards-grid not found in DOM!');
-        }
-        if (col) {
-            const colStyle = window.getComputedStyle(col);
-            console.log('Column Display:', colStyle.display);
-            console.log('Column Width:', colStyle.width);
-        }
-    }, 100);
 }
 
 // ======================== LIFE COACH ========================
