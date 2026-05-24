@@ -1193,15 +1193,6 @@ button.ghost:hover { background: var(--border-strong); }
 }
 
 /* ==================== TARGET BOARD (COMPANIES/PEOPLE/PORTALS) ==================== */
-@media (min-width: 1024px) {
-    .linear-list-board {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 20px !important;
-    }
-}
-
 .target-card {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
@@ -1526,18 +1517,6 @@ button.ghost:hover { background: var(--border-strong); }
     gap: 20px !important;
     width: 100% !important;
     box-sizing: border-box !important;
-}
-
-@media (max-width: 900px) {
-    .target-cards-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    }
-}
-
-@media (max-width: 600px) {
-    .target-cards-grid {
-        grid-template-columns: 1fr !important;
-    }
 }
 
 /* ==================== WCAG 2.2 AA COMPLIANCE & VISIBLE FOCUS ==================== */

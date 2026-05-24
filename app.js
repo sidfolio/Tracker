@@ -996,6 +996,16 @@ function renderContacts(container) {
 
     container.innerHTML = html;
 
+    // ── FORCE 3-COL GRID (setProperty !important beats ALL stylesheet rules) ──
+    const _grid = document.getElementById('col-' + activeKey);
+    if (_grid) {
+        _grid.style.setProperty('display',                'grid',                         'important');
+        _grid.style.setProperty('grid-template-columns',  'repeat(3, minmax(0, 1fr))',    'important');
+        _grid.style.setProperty('gap',                    '20px',                         'important');
+        _grid.style.setProperty('width',                  '100%',                         'important');
+        _grid.style.setProperty('box-sizing',             'border-box',                   'important');
+    }
+
     // Event delegation for blur (auto-saving)
     const cardBoard = container.querySelector('.linear-list-board');
     cardBoard.addEventListener('blur', (e) => {
