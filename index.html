@@ -43,6 +43,140 @@
         window.dispatchEvent(new Event('firebaseReady'));
     </script>
     <link rel="stylesheet" href="style.css?v=3">
+    <style id="blueprint-grid-overrides">
+        /* Remove outer double border framing */
+        .linear-column {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        /* Force target cards inside tabs to layout side-by-side in a responsive CSS Grid */
+        .target-cards-grid {
+            display: grid !important;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+            gap: 20px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Ensure cards fill exactly one grid column and stretch fluidly */
+        .target-card {
+            background: var(--bg-card) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-lg) !important;
+            padding: 20px !important;
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 14px !important;
+            position: relative !important;
+            transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition) !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .target-card:hover {
+            border-color: var(--accent) !important;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3) !important;
+            transform: translateY(-2px) !important;
+        }
+
+        .target-card-header {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+            border-bottom: 1px solid var(--border) !important;
+            padding-bottom: 10px !important;
+            margin-bottom: 2px !important;
+        }
+
+        .target-card-name {
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+            color: var(--text-primary) !important;
+            border: none !important;
+            outline: none !important;
+            background: transparent !important;
+            width: 100% !important;
+            padding: 2px 0 !important;
+            min-height: 1.2em !important;
+            letter-spacing: -0.01em !important;
+        }
+
+        /* Align fields vertically inside every row across all cards */
+        .target-card-field-row {
+            display: grid !important;
+            grid-template-columns: 20px 84px 1fr 24px 24px !important;
+            align-items: center !important;
+            gap: 8px !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+            padding: 6px 10px !important;
+            border-radius: var(--radius-sm) !important;
+            border: 1px solid transparent !important;
+            transition: all var(--transition) !important;
+            position: relative !important;
+            box-sizing: border-box !important;
+            width: 100% !important;
+        }
+
+        .target-card-field-row:hover {
+            background: rgba(255, 255, 255, 0.04) !important;
+            border-color: var(--border) !important;
+        }
+
+        .target-card-field-label {
+            background: var(--bg-elevated) !important;
+            color: var(--text-secondary) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-sm) !important;
+            font-size: 0.7rem !important;
+            font-weight: 600 !important;
+            padding: 2px 4px !important;
+            outline: none !important;
+            cursor: pointer !important;
+            transition: all var(--transition) !important;
+            font-family: inherit !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        .target-card-link-text {
+            border: none !important;
+            outline: none !important;
+            background: transparent !important;
+            color: var(--text-secondary) !important;
+            padding: 1px 0 !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            min-height: 1.1em !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+            min-width: 0 !important;
+        }
+
+        /* Clean description area border and background */
+        .target-card-desc {
+            font-size: 0.83rem !important;
+            color: var(--text-secondary) !important;
+            line-height: 1.5 !important;
+            border: 1px solid var(--border) !important;
+            outline: none !important;
+            background: rgba(255, 255, 255, 0.015) !important;
+            padding: 10px 12px !important;
+            border-radius: var(--radius-sm) !important;
+            min-height: 54px !important;
+            transition: all var(--transition) !important;
+        }
+        
+        .target-card-desc:focus {
+            color: var(--text-primary) !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border-color: var(--accent) !important;
+        }
+    </style>
     <!-- Chart.js for data visualization -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 </head>
