@@ -1985,12 +1985,38 @@ const NotionEditor = {
         // Handle slash command
         const slashMenu = document.getElementById('slash-command-menu');
         if (text.startsWith('/')) {
-            const rect = block.getBoundingClientRect();
-            slashMenu.style.left = `${rect.left}px`;
-            slashMenu.style.top = `${rect.bottom + 4}px`;
-            slashMenu.classList.add('active');
-            slashMenu.dataset.blockId = Math.random().toString(); // Tag it
-            block.dataset.slashTarget = slashMenu.dataset.blockId;
+            const query = text.substring(1).toLowerCase().trim();
+            const items = Array.from(slashMenu.querySelectorAll('.slash-item'));
+            let hasVisible = false;
+            
+            items.forEach(item => {
+                const title = item.querySelector('.slash-item-title').textContent.toLowerCase();
+                const desc = item.querySelector('.slash-item-desc').textContent.toLowerCase();
+                if (title.includes(query) || desc.includes(query) || query === '') {
+                    item.style.display = 'flex';
+                    hasVisible = true;
+                } else {
+                    item.style.display = 'none';
+                    item.classList.remove('selected');
+                }
+            });
+
+            if (hasVisible) {
+                const visibleItems = items.filter(i => i.style.display !== 'none');
+                if (!visibleItems.find(i => i.classList.contains('selected'))) {
+                    items.forEach(i => i.classList.remove('selected'));
+                    if(visibleItems.length > 0) visibleItems[0].classList.add('selected');
+                }
+                
+                const rect = block.getBoundingClientRect();
+                slashMenu.style.left = `${rect.left}px`;
+                slashMenu.style.top = `${rect.bottom + 4}px`;
+                slashMenu.classList.add('active');
+                slashMenu.dataset.blockId = Math.random().toString(); // Tag it
+                block.dataset.slashTarget = slashMenu.dataset.blockId;
+            } else {
+                slashMenu.classList.remove('active');
+            }
         } else {
             slashMenu.classList.remove('active');
         }
@@ -2044,10 +2070,48 @@ const NotionEditor = {
             else todo.classList.remove('checked');
             
             // Trigger save
-            const mainBlock = e.target.closest('.notion-block');
+            const mainBlock = e.target.closest('.editor-root');
             if (mainBlock) {
                 const event = new Event('input', { bubbles: true });
                 mainBlock.dispatchEvent(event);
+            }
+        }
+
+        // Slash menu navigation
+        const slashMenu = document.getElementById('slash-command-menu');
+        if (slashMenu && slashMenu.classList.contains('active')) {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                slashMenu.classList.remove('active');
+                return;
+            }
+            
+            const items = Array.from(slashMenu.querySelectorAll('.slash-item')).filter(i => i.style.display !== 'none');
+            if (items.length === 0) return;
+            
+            let selectedIdx = items.findIndex(item => item.classList.contains('selected'));
+            if (selectedIdx === -1) selectedIdx = 0;
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                const nextIdx = (selectedIdx + 1) % items.length;
+                items.forEach(item => item.classList.remove('selected'));
+                items[nextIdx].classList.add('selected');
+                items[nextIdx].scrollIntoView({ block: 'nearest' });
+                return;
+            }
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                const nextIdx = (selectedIdx - 1 + items.length) % items.length;
+                items.forEach(item => item.classList.remove('selected'));
+                items[nextIdx].classList.add('selected');
+                items[nextIdx].scrollIntoView({ block: 'nearest' });
+                return;
+            }
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.executeSlashCommand(items[selectedIdx].dataset.type);
+                return;
             }
         }
     }
@@ -2099,9 +2163,14 @@ function renderJournal(container) {
 
             return `
             <div class="journal-note" style="background:${note.color};" tabindex="0" role="listitem" aria-label="Journal entry">
-                <button class="journal-action-btn j-action-pin pin-top-right ${note.pinned ? 'active' : ''}" data-id="${note.id}" title="${note.pinned ? 'Unpin' : 'Pin note'}">
-                    <i class="ph ${note.pinned ? 'ph-push-pin-slash' : 'ph-push-pin'}"></i>
-                </button>
+                <div class="note-top-right-actions">
+                    <button class="journal-action-btn j-action-expand expand-top-right" data-id="${note.id}" title="Expand note (E)">
+                        <i class="ph ph-arrows-out"></i>
+                    </button>
+                    <button class="journal-action-btn j-action-pin pin-top-right ${note.pinned ? 'active' : ''}" data-id="${note.id}" title="${note.pinned ? 'Unpin' : 'Pin note'} (P)">
+                        <i class="ph ${note.pinned ? 'ph-push-pin-slash' : 'ph-push-pin'}"></i>
+                    </button>
+                </div>
                 
                 <div class="journal-note-title" contenteditable="true" data-id="${note.id}" placeholder="Title">${note.title || ''}</div>
                 ${bodyHTML}
@@ -2109,19 +2178,19 @@ function renderJournal(container) {
                 <div class="journal-note-toolbar">
                     <div class="toolbar-left">
                         <div style="position:relative;">
-                            <button class="journal-action-btn j-action-color" data-id="${note.id}" title="Change color">
+                            <button class="journal-action-btn j-action-color" data-id="${note.id}" title="Change color (C)">
                                 <i class="ph ph-palette"></i>
                             </button>
                             <div class="color-picker j-color-picker-${note.id}">
                                 ${JOURNAL_COLORS.map(c => `<div class="color-swatch edit-color-swatch" data-id="${note.id}" data-color="${c}" style="background:${c};"></div>`).join('')}
                             </div>
                         </div>
-                        <button class="journal-action-btn j-action-archive" data-id="${note.id}" title="${note.archived ? 'Unarchive' : 'Archive'}">
+                        <button class="journal-action-btn j-action-archive" data-id="${note.id}" title="${note.archived ? 'Unarchive' : 'Archive'} (A)">
                             <i class="ph ${note.archived ? 'ph-upload-simple' : 'ph-archive-box'}"></i>
                         </button>
                     </div>
                     <div class="toolbar-right">
-                        <button class="journal-action-btn j-action-delete" data-id="${note.id}" title="Delete">
+                        <button class="journal-action-btn j-action-delete" data-id="${note.id}" title="Delete (Del)">
                             <i class="ph ph-trash"></i>
                         </button>
                     </div>
@@ -2359,6 +2428,13 @@ function renderJournal(container) {
         });
     });
 
+    container.querySelectorAll('.j-action-expand').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.id;
+            expandNoteModal(id);
+        });
+    });
+
     container.querySelectorAll('.j-action-color').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -2544,6 +2620,69 @@ function renderJournal(container) {
     });
 }
 
+// --- Expand Modal Logic ---
+function expandNoteModal(id) {
+    const d = getData();
+    const note = d.journal.find(n => n.id === id);
+    if (!note) return;
+
+    const modal = document.getElementById('journal-expand-modal');
+    const content = document.getElementById('j-expand-content');
+    
+    // Build the editor similar to the composer but directly editing
+    content.innerHTML = `
+        <button class="j-expand-close" id="j-expand-close"><i class="ph ph-x"></i></button>
+        <input type="text" id="j-expand-title" class="j-expand-title" placeholder="Title" value="${(note.title || '').replace(/"/g, '&quot;')}">
+        <div id="j-expand-body" contenteditable="true" class="j-expand-body editor-root" data-placeholder="Take a note...">${note.body || ''}</div>
+    `;
+    
+    modal.style.display = 'flex';
+    
+    // Auto-focus body
+    setTimeout(() => {
+        const bodyInput = document.getElementById('j-expand-body');
+        if(bodyInput) bodyInput.focus();
+    }, 50);
+
+    const closeModal = () => {
+        const newTitle = document.getElementById('j-expand-title').value;
+        const newBody = document.getElementById('j-expand-body').innerHTML;
+        
+        // Save
+        const currentData = getData();
+        const currentNote = currentData.journal.find(n => n.id === id);
+        if (currentNote) {
+            currentNote.title = newTitle;
+            currentNote.body = newBody;
+            saveData(currentData);
+            
+            // Only re-render if we're actually in the journal view
+            const container = document.getElementById('view-container');
+            if (window.location.hash.includes('journal')) {
+                renderJournal(container);
+            }
+        }
+        
+        modal.style.display = 'none';
+        content.innerHTML = '';
+    };
+
+    document.getElementById('j-expand-close').addEventListener('click', closeModal);
+    
+    // Close on outside click
+    modal.addEventListener('mousedown', (e) => {
+        if (e.target === modal) closeModal();
+    });
+    
+    // Close on Escape
+    const escHandler = (e) => {
+        if (e.key === 'Escape' && modal.style.display === 'flex') {
+            closeModal();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+}
 
 // ======================== ACCESSIBILITY HELPERS & SPOTLIGHT/PALETTE ========================
 function announce(message) {
@@ -3356,8 +3495,43 @@ window.addEventListener('keydown', (e) => {
 
     // Journal Specific
     if (currentHash === 'journal') {
+        const activeNote = document.activeElement.closest('.journal-note');
+        if (activeNote && document.activeElement === activeNote) {
+            const key = e.key.toLowerCase();
+            if (key === 'e' || e.key === 'Enter') {
+                e.preventDefault();
+                const btn = activeNote.querySelector('.j-action-expand');
+                if (btn) btn.click();
+                return;
+            }
+            if (key === 'p') {
+                e.preventDefault();
+                const btn = activeNote.querySelector('.j-action-pin');
+                if (btn) btn.click();
+                return;
+            }
+            if (key === 'a') {
+                e.preventDefault();
+                const btn = activeNote.querySelector('.j-action-archive');
+                if (btn) btn.click();
+                return;
+            }
+            if (key === 'c') {
+                e.preventDefault();
+                const btn = activeNote.querySelector('.j-action-color');
+                if (btn) btn.click();
+                return;
+            }
+            if (e.key === 'Delete' || key === '#') {
+                e.preventDefault();
+                const btn = activeNote.querySelector('.j-action-delete');
+                if (btn) btn.click();
+                return;
+            }
+        }
+
         if (e.key.toLowerCase() === 'n') {
-            const addIn = document.getElementById('j-new-title');
+            const addIn = document.getElementById('j-comp-body'); // Changed from j-new-title to j-comp-body
             if (addIn) {
                 e.preventDefault();
                 addIn.focus();

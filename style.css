@@ -1164,15 +1164,21 @@ button.ghost:hover { background: var(--border-strong); }
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.4);
 }
 
-.pin-top-right {
+.note-top-right-actions {
     position: absolute;
     top: 8px;
     right: 8px;
+    display: flex;
+    gap: 4px;
     opacity: 0;
+    transition: opacity 0.15s;
 }
-.journal-note:hover .pin-top-right, 
-.journal-note:focus-within .pin-top-right,
-.pin-top-right.active {
+.journal-note:hover .note-top-right-actions, 
+.journal-note:focus-within .note-top-right-actions,
+.journal-note:focus .note-top-right-actions {
+    opacity: 1;
+}
+.journal-note .j-action-pin.active {
     opacity: 1;
 }
 
@@ -1854,6 +1860,20 @@ body.layout-compact .main-content {
     min-height: 1.5em; /* Ensure empty blocks are clickable */
 }
 
+/* Remove default focus outlines (purple stroke) */
+.composer-title-input:focus,
+.composer-title-input:focus-visible,
+.composer-body-input:focus,
+.composer-body-input:focus-visible,
+.journal-note-title:focus,
+.journal-note-title:focus-visible,
+.journal-note-body:focus,
+.journal-note-body:focus-visible,
+.notion-block:focus,
+.notion-block:focus-visible {
+    outline: none !important;
+}
+
 /* Fix for contenteditable empty divs collapsing */
 .notion-block:empty::before {
     content: '\200B'; /* Zero-width space */
@@ -1944,9 +1964,14 @@ body.layout-compact .main-content {
     counter-reset: notion-num;
 }
 
+.notion-block:focus,
+.notion-block:focus-visible {
+    outline: none !important;
+}
+
 /* --- Floating Toolbar --- */
 .notion-floating-toolbar {
-    position: absolute;
+    position: fixed;
     background: var(--bg-card); /* Keep it slightly lighter than deep dark */
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -1996,7 +2021,7 @@ body.layout-compact .main-content {
 
 /* --- Slash Command Menu --- */
 .slash-command-menu {
-    position: absolute;
+    position: fixed;
     background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -2046,4 +2071,64 @@ body.layout-compact .main-content {
 .slash-item-desc {
     font-size: 0.75rem;
     color: var(--text-muted);
+}
+
+/* --- Journal Expand Modal --- */
+.journal-expand-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 600px;
+    max-width: 90vw;
+    max-height: 85vh;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    transform: scale(0.9);
+    opacity: 0;
+    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    position: relative;
+}
+.modal-overlay[style*="display: flex"] .journal-expand-content {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.j-expand-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+.j-expand-close:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+}
+
+.j-expand-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    background: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    margin-bottom: 16px;
+    padding-right: 32px; /* for close button */
+}
+.j-expand-body {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    outline: none;
+    min-height: 300px;
 }
