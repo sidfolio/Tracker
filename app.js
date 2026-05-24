@@ -1853,104 +1853,184 @@ document.head.appendChild(style);
 
 // ======================== JOURNAL (KEEP CLONE) ========================
 const JOURNAL_COLORS = [
-    'var(--bg-card)',          // Default
-    'rgba(239, 68, 68, 0.15)', // Red
-    'rgba(245, 158, 11, 0.15)',// Yellow
-    'rgba(34, 197, 94, 0.15)', // Green
-    'rgba(59, 130, 246, 0.15)',// Blue
-    'rgba(139, 92, 246, 0.15)' // Purple
+    'var(--bg-card)',                  // Default
+    'rgba(242, 139, 130, 0.15)',       // Red
+    'rgba(251, 188, 4, 0.15)',         // Orange
+    'rgba(255, 244, 117, 0.15)',       // Yellow
+    'rgba(204, 255, 144, 0.15)',       // Sage
+    'rgba(168, 218, 181, 0.15)',       // Teal
+    'rgba(203, 240, 248, 0.15)',       // Blue
+    'rgba(174, 203, 250, 0.15)',       // Dark Blue
+    'rgba(215, 174, 251, 0.15)',       // Purple
+    'rgba(253, 207, 232, 0.15)',       // Pink
+    'rgba(230, 201, 168, 0.15)',       // Brown
+    'rgba(232, 234, 237, 0.15)'        // Gray
 ];
 
 function renderJournal(container) {
     const data = getData();
     if (!data.journal) data.journal = [];
 
-    // Sort notes: pinned first, then by timestamp descending
-    const sortedNotes = [...data.journal].sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return b.created - a.created;
-    });
+    // Filter and sort notes
+    const activeNotes = data.journal.filter(n => !n.archived);
+    const archivedNotes = data.journal.filter(n => n.archived).sort((a, b) => b.created - a.created);
+    
+    const pinnedNotes = activeNotes.filter(n => n.pinned).sort((a, b) => b.created - a.created);
+    const otherNotes = activeNotes.filter(n => !n.pinned).sort((a, b) => b.created - a.created);
 
     // Load draft state
     let draftStr = localStorage.getItem('journalDraft');
-    let draft = draftStr ? JSON.parse(draftStr) : { title: '', body: '', color: 'var(--bg-card)', pinned: false, isChecklist: false };
+    let draft = draftStr ? JSON.parse(draftStr) : { title: '', body: '', color: 'var(--bg-card)', pinned: false, isChecklist: false, isExpanded: false };
 
-    container.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:20px;">
-            <div>
-                <h2 style="font-weight:700; letter-spacing:-0.02em; margin-bottom:4px;">Journal & Notes</h2>
-                <p style="color:var(--text-secondary); font-size:0.85rem;">Capture thoughts, checklists, and milestones.</p>
-            </div>
-        </div>
-
-        <!-- CREATE NOTE BOX -->
-        <div class="journal-create-box" id="j-create-box" style="background:${draft.color};">
-            <input type="text" id="j-new-title" class="journal-input title" placeholder="Title" value="${draft.title.replace(/"/g, '&quot;')}">
-            <textarea id="j-new-body" class="journal-input" placeholder="${draft.isChecklist ? 'List items (press Enter for new item)...' : 'Take a note...'}" rows="${draft.body ? 3 : 1}">${draft.body}</textarea>
-            
-            <div class="journal-actions" id="j-create-actions" style="display:${(draft.title || draft.body) ? 'flex' : 'none'};">
-                <div class="journal-tools">
-                    <button class="journal-tool-btn" id="j-new-pin" title="Pin Note" style="color:${draft.pinned ? 'var(--accent)' : 'var(--text-muted)'};"><i class="ph ph-push-pin"></i></button>
-                    <button class="journal-tool-btn" id="j-new-check" title="Toggle Checklist" style="color:${draft.isChecklist ? 'var(--accent)' : 'var(--text-muted)'};"><i class="ph ph-check-square"></i></button>
-                    <div style="position:relative;">
-                        <button class="journal-tool-btn" id="j-new-color" title="Change Color"><i class="ph ph-palette"></i></button>
-                        <div class="color-picker" id="j-new-color-picker">
-                            ${JOURNAL_COLORS.map((c, i) => `<div class="color-swatch new-color-swatch" data-color="${c}" style="background:${c};"></div>`).join('')}
-                        </div>
-                    </div>
-                </div>
-                <button class="primary-btn" id="j-new-save" style="padding:6px 16px; font-size:0.85rem;">Close</button>
-            </div>
-        </div>
-
-        <!-- MASONRY GRID -->
-        <div class="journal-masonry">
-            ${sortedNotes.map(note => {
-                let bodyHTML = '';
-                if (note.isChecklist) {
-                    const lines = note.body.split('\n');
-                    bodyHTML = lines.map((l, i) => `
-                        <div class="journal-checklist-item">
-                            <input type="checkbox" class="j-check" data-id="${note.id}" data-idx="${i}" ${note.checkedLines?.includes(i) ? 'checked' : ''}>
+    // Helper to render a grid of notes
+    const renderNoteGrid = (notes, sectionTitle = null) => {
+        if (notes.length === 0) return '';
+        
+        let sectionHeader = sectionTitle ? `<div class="journal-section-label">${sectionTitle}</div>` : '';
+        
+        const gridHtml = notes.map(note => {
+            let bodyHTML = '';
+            if (note.isChecklist) {
+                const lines = note.body.split('\n');
+                
+                // Separate unchecked and checked items
+                const unchecked = [];
+                const checked = [];
+                
+                lines.forEach((l, i) => {
+                    const isChecked = note.checkedLines?.includes(i);
+                    const itemHtml = `
+                        <div class="journal-checklist-item ${isChecked ? 'checked' : ''}">
+                            <input type="checkbox" class="j-check" data-id="${note.id}" data-idx="${i}" ${isChecked ? 'checked' : ''}>
                             <div class="journal-checklist-text" contenteditable="true" data-id="${note.id}" data-idx="${i}" placeholder="List item">${l}</div>
                         </div>
-                    `).join('');
-                } else {
-                    bodyHTML = `<div class="journal-note-body" contenteditable="true" data-id="${note.id}" placeholder="Take a note...">${note.body}</div>`;
-                }
+                    `;
+                    if (isChecked) checked.push(itemHtml);
+                    else unchecked.push(itemHtml);
+                });
 
-                return `
-                <div class="journal-note ${note.pinned ? 'pinned' : ''}" style="background:${note.color};" tabindex="0" role="listitem" aria-label="Journal entry: ${note.title || 'Untitled'}. Press Ctrl+Delete to remove.">
-                    <div class="journal-note-title" contenteditable="true" data-id="${note.id}" placeholder="Title">${note.title || ''}</div>
-                    ${bodyHTML}
-                    
-                    <div class="journal-note-footer">
-                        <button class="journal-tool-btn j-action-pin" data-id="${note.id}" title="Pin Note">
-                            <i class="ph ${note.pinned ? 'ph-push-pin-slash' : 'ph-push-pin'}"></i>
-                        </button>
+                bodyHTML = `
+                    <div class="journal-checklist-group">${unchecked.join('')}</div>
+                    ${checked.length > 0 ? `
+                        <div class="journal-checklist-divider"></div>
+                        <div class="journal-checklist-group checked-group">${checked.join('')}</div>
+                    ` : ''}
+                `;
+            } else {
+                bodyHTML = `<div class="journal-note-body" contenteditable="true" data-id="${note.id}" placeholder="Note">${note.body}</div>`;
+            }
+
+            return `
+            <div class="journal-note" style="background:${note.color};" tabindex="0" role="listitem" aria-label="Journal entry">
+                <button class="journal-action-btn j-action-pin pin-top-right ${note.pinned ? 'active' : ''}" data-id="${note.id}" title="${note.pinned ? 'Unpin' : 'Pin note'}">
+                    <i class="ph ${note.pinned ? 'ph-push-pin-slash' : 'ph-push-pin'}"></i>
+                </button>
+                
+                <div class="journal-note-title" contenteditable="true" data-id="${note.id}" placeholder="Title">${note.title || ''}</div>
+                ${bodyHTML}
+                
+                <div class="journal-note-toolbar">
+                    <div class="toolbar-left">
                         <div style="position:relative;">
-                            <button class="journal-tool-btn j-action-color" data-id="${note.id}" title="Change Color">
+                            <button class="journal-action-btn j-action-color" data-id="${note.id}" title="Change color">
                                 <i class="ph ph-palette"></i>
                             </button>
                             <div class="color-picker j-color-picker-${note.id}">
                                 ${JOURNAL_COLORS.map(c => `<div class="color-swatch edit-color-swatch" data-id="${note.id}" data-color="${c}" style="background:${c};"></div>`).join('')}
                             </div>
                         </div>
-                        <button class="journal-tool-btn j-action-delete" data-id="${note.id}" title="Delete Note">
+                        <button class="journal-action-btn j-action-archive" data-id="${note.id}" title="${note.archived ? 'Unarchive' : 'Archive'}">
+                            <i class="ph ${note.archived ? 'ph-upload-simple' : 'ph-archive-box'}"></i>
+                        </button>
+                    </div>
+                    <div class="toolbar-right">
+                        <button class="journal-action-btn j-action-delete" data-id="${note.id}" title="Delete">
                             <i class="ph ph-trash"></i>
                         </button>
                     </div>
-                </div>`;
-            }).join('')}
+                </div>
+            </div>`;
+        }).join('');
+
+        return `
+            ${sectionHeader}
+            <div class="journal-masonry">${gridHtml}</div>
+        `;
+    };
+
+    container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:24px;">
+            <div>
+                <h2 style="font-weight:700; letter-spacing:-0.02em; margin-bottom:4px;">Journal & Notes</h2>
+            </div>
+        </div>
+
+        <!-- EXPANDABLE COMPOSER -->
+        <div class="journal-composer-wrapper">
+            <div class="journal-composer ${draft.isExpanded ? 'expanded' : ''}" id="j-composer" style="background:${draft.color};">
+                
+                <!-- Collapsed State (Just the fake input + icons) -->
+                <div class="composer-collapsed" id="j-comp-collapsed" style="display:${draft.isExpanded ? 'none' : 'flex'}">
+                    <div class="fake-input">Take a note...</div>
+                    <div class="quick-actions">
+                        <button class="journal-action-btn" id="j-comp-quick-check" title="New list"><i class="ph ph-check-square"></i></button>
+                    </div>
+                </div>
+
+                <!-- Expanded State -->
+                <div class="composer-expanded" id="j-comp-expanded" style="display:${draft.isExpanded ? 'block' : 'none'}">
+                    <div class="composer-header">
+                        <input type="text" id="j-comp-title" class="composer-title-input" placeholder="Title" value="${draft.title.replace(/"/g, '&quot;')}">
+                        <button class="journal-action-btn j-comp-pin ${draft.pinned ? 'active' : ''}" id="j-comp-pin" title="Pin note">
+                            <i class="ph ${draft.pinned ? 'ph-push-pin-slash' : 'ph-push-pin'}"></i>
+                        </button>
+                    </div>
+                    
+                    <textarea id="j-comp-body" class="composer-body-input" placeholder="${draft.isChecklist ? 'List item...' : 'Take a note...'}" rows="1">${draft.body}</textarea>
+                    
+                    <div class="composer-toolbar">
+                        <div class="toolbar-left">
+                            <button class="journal-action-btn ${draft.isChecklist ? 'active' : ''}" id="j-comp-check" title="Toggle checklist">
+                                <i class="ph ph-list-checks"></i>
+                            </button>
+                            <div style="position:relative;">
+                                <button class="journal-action-btn" id="j-comp-color" title="Change color">
+                                    <i class="ph ph-palette"></i>
+                                </button>
+                                <div class="color-picker" id="j-comp-color-picker">
+                                    ${JOURNAL_COLORS.map((c) => `<div class="color-swatch new-color-swatch" data-color="${c}" style="background:${c};"></div>`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="toolbar-right">
+                            <button class="composer-close-btn" id="j-comp-close">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTES BOARDS -->
+        <div class="journal-boards">
+            ${pinnedNotes.length > 0 ? renderNoteGrid(pinnedNotes, 'PINNED') : ''}
+            ${otherNotes.length > 0 ? renderNoteGrid(otherNotes, pinnedNotes.length > 0 ? 'OTHERS' : null) : ''}
+            ${archivedNotes.length > 0 ? renderNoteGrid(archivedNotes, 'ARCHIVE') : ''}
+            ${data.journal.length === 0 ? `
+                <div style="text-align:center; padding: 60px 20px; color:var(--text-muted);">
+                    <i class="ph ph-lightbulb" style="font-size:3rem; margin-bottom:16px; opacity:0.5;"></i>
+                    <p style="font-size:1.1rem;">Notes you add appear here</p>
+                </div>
+            ` : ''}
         </div>
     `;
 
-    // --- Create Box Logic ---
-    const createBox = document.getElementById('j-create-box');
-    const titleIn = document.getElementById('j-new-title');
-    const bodyIn = document.getElementById('j-new-body');
-    const actions = document.getElementById('j-create-actions');
+    // --- COMPOSER LOGIC ---
+    const composer = document.getElementById('j-composer');
+    const collapsed = document.getElementById('j-comp-collapsed');
+    const expanded = document.getElementById('j-comp-expanded');
+    const titleIn = document.getElementById('j-comp-title');
+    const bodyIn = document.getElementById('j-comp-body');
+    
     let newNoteState = draft;
 
     function saveDraft() {
@@ -1959,23 +2039,24 @@ function renderJournal(container) {
         localStorage.setItem('journalDraft', JSON.stringify(newNoteState));
     }
 
-    titleIn.addEventListener('input', saveDraft);
-
-    bodyIn.addEventListener('focus', () => {
-        actions.style.display = 'flex';
-        bodyIn.rows = 3;
-    });
-
-    // Auto-resize textarea and save draft
-    bodyIn.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
+    function expandComposer(isChecklist = false) {
+        newNoteState.isExpanded = true;
+        if (isChecklist) newNoteState.isChecklist = true;
+        
+        collapsed.style.display = 'none';
+        expanded.style.display = 'block';
+        composer.classList.add('expanded');
+        
+        bodyIn.placeholder = newNoteState.isChecklist ? 'List item...' : 'Take a note...';
+        
+        setTimeout(() => bodyIn.focus(), 50);
         saveDraft();
-    });
+    }
 
-    document.getElementById('j-new-save').addEventListener('click', () => {
+    function closeComposerAndSave() {
         const title = titleIn.value.trim();
         const body = bodyIn.value.trim();
+        
         if (title || body) {
             const d = getData();
             d.journal.push({
@@ -1985,42 +2066,85 @@ function renderJournal(container) {
                 pinned: newNoteState.pinned,
                 isChecklist: newNoteState.isChecklist,
                 checkedLines: [],
+                archived: false,
                 created: Date.now()
             });
             saveData(d);
         }
+        
         localStorage.removeItem('journalDraft');
         renderJournal(container);
+    }
+
+    // Trigger expansion
+    collapsed.querySelector('.fake-input').addEventListener('click', () => expandComposer(false));
+    document.getElementById('j-comp-quick-check').addEventListener('click', (e) => {
+        e.stopPropagation();
+        expandComposer(true);
+        document.getElementById('j-comp-check').classList.add('active');
     });
 
-    document.getElementById('j-new-pin').addEventListener('click', (e) => {
+    // Handle inputs
+    titleIn.addEventListener('input', saveDraft);
+    bodyIn.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        saveDraft();
+    });
+
+    // Initial resize if draft body exists
+    if (draft.body) {
+        bodyIn.style.height = 'auto';
+        bodyIn.style.height = (bodyIn.scrollHeight) + 'px';
+    }
+
+    // Close button
+    document.getElementById('j-comp-close').addEventListener('click', closeComposerAndSave);
+
+    // Click outside to close
+    document.addEventListener('mousedown', function clickOutsideComposer(e) {
+        if (newNoteState.isExpanded && !composer.contains(e.target)) {
+            // Check if color picker is active and click is inside it
+            if (e.target.closest('.color-picker')) return;
+            
+            document.removeEventListener('mousedown', clickOutsideComposer);
+            closeComposerAndSave();
+        }
+    });
+
+    // Toolbar buttons
+    document.getElementById('j-comp-pin').addEventListener('click', (e) => {
         newNoteState.pinned = !newNoteState.pinned;
-        e.currentTarget.style.color = newNoteState.pinned ? 'var(--accent)' : 'var(--text-muted)';
+        const icon = e.currentTarget.querySelector('i');
+        icon.className = `ph ${newNoteState.pinned ? 'ph-push-pin-slash' : 'ph-push-pin'}`;
+        e.currentTarget.classList.toggle('active', newNoteState.pinned);
         saveDraft();
     });
 
-    document.getElementById('j-new-check').addEventListener('click', (e) => {
+    document.getElementById('j-comp-check').addEventListener('click', (e) => {
         newNoteState.isChecklist = !newNoteState.isChecklist;
-        e.currentTarget.style.color = newNoteState.isChecklist ? 'var(--accent)' : 'var(--text-muted)';
-        bodyIn.placeholder = newNoteState.isChecklist ? 'List items (press Enter for new item)...' : 'Take a note...';
+        e.currentTarget.classList.toggle('active', newNoteState.isChecklist);
+        bodyIn.placeholder = newNoteState.isChecklist ? 'List item...' : 'Take a note...';
         saveDraft();
     });
 
-    const newColorPicker = document.getElementById('j-new-color-picker');
-    document.getElementById('j-new-color').addEventListener('click', () => {
+    const newColorPicker = document.getElementById('j-comp-color-picker');
+    document.getElementById('j-comp-color').addEventListener('click', (e) => {
+        e.stopPropagation();
         newColorPicker.classList.toggle('active');
     });
     
     container.querySelectorAll('.new-color-swatch').forEach(sw => {
         sw.addEventListener('click', (e) => {
+            e.stopPropagation();
             newNoteState.color = e.target.dataset.color;
-            createBox.style.background = newNoteState.color;
+            composer.style.background = newNoteState.color;
             newColorPicker.classList.remove('active');
             saveDraft();
         });
     });
 
-    // --- Existing Notes Actions ---
+    // --- NOTE CARD ACTIONS ---
     container.querySelectorAll('.j-action-pin').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = e.currentTarget.dataset.id;
@@ -2032,6 +2156,21 @@ function renderJournal(container) {
         });
     });
 
+    container.querySelectorAll('.j-action-archive').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.currentTarget.dataset.id;
+            const d = getData();
+            const note = d.journal.find(n => n.id === id);
+            if (note) {
+                note.archived = !note.archived;
+                if (note.archived) note.pinned = false; // unpin when archiving
+            }
+            saveData(d);
+            renderJournal(container);
+            showToast(note.archived ? 'Note archived' : 'Note unarchived');
+        });
+    });
+
     container.querySelectorAll('.j-action-delete').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const id = e.currentTarget.dataset.id;
@@ -2039,11 +2178,13 @@ function renderJournal(container) {
             d.journal = d.journal.filter(n => n.id !== id);
             saveData(d);
             renderJournal(container);
+            showToast('Note deleted');
         });
     });
 
     container.querySelectorAll('.j-action-color').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = e.currentTarget.dataset.id;
             const picker = container.querySelector(`.j-color-picker-${id}`);
             container.querySelectorAll('.color-picker').forEach(p => { if (p !== picker) p.classList.remove('active'); });
@@ -2053,6 +2194,7 @@ function renderJournal(container) {
 
     container.querySelectorAll('.edit-color-swatch').forEach(sw => {
         sw.addEventListener('click', (e) => {
+            e.stopPropagation();
             const id = e.target.dataset.id;
             const color = e.target.dataset.color;
             const d = getData();
@@ -2063,7 +2205,14 @@ function renderJournal(container) {
         });
     });
 
-    // --- Checklist Checking ---
+    // Hide color pickers on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.j-action-color') && !e.target.closest('.color-picker')) {
+            container.querySelectorAll('.color-picker.active').forEach(p => p.classList.remove('active'));
+        }
+    });
+
+    // --- CHECKLIST CHECKING ---
     container.querySelectorAll('.j-check').forEach(chk => {
         chk.addEventListener('change', (e) => {
             const id = e.target.dataset.id;
@@ -2079,14 +2228,13 @@ function renderJournal(container) {
                     note.checkedLines = note.checkedLines.filter(x => x !== idx);
                 }
                 saveData(d);
-                renderJournal(container);
+                renderJournal(container); // Re-renders to move items visually
             }
         });
     });
 
-    // --- Inline Editing for Existing Notes ---
-
-    // 1. Edit Title
+    // --- INLINE EDITING ---
+    // Title
     container.querySelectorAll('.journal-note-title[contenteditable="true"]').forEach(el => {
         el.addEventListener('blur', (e) => {
             const id = e.currentTarget.dataset.id;
@@ -2096,7 +2244,6 @@ function renderJournal(container) {
             if (note && note.title !== newTitle) {
                 note.title = newTitle;
                 saveData(d);
-                showToast('Title updated.', 'success');
             }
         });
         el.addEventListener('keydown', (e) => {
@@ -2107,7 +2254,7 @@ function renderJournal(container) {
         });
     });
 
-    // 2. Edit Body (Regular Notes)
+    // Body
     container.querySelectorAll('.journal-note-body[contenteditable="true"]').forEach(el => {
         el.addEventListener('blur', (e) => {
             const id = e.currentTarget.dataset.id;
@@ -2117,12 +2264,11 @@ function renderJournal(container) {
             if (note && note.body !== newBody) {
                 note.body = newBody;
                 saveData(d);
-                showToast('Note updated.', 'success');
             }
         });
     });
 
-    // 3. Edit Checklist Items
+    // Checklist Items
     container.querySelectorAll('.journal-checklist-text[contenteditable="true"]').forEach(el => {
         el.addEventListener('blur', (e) => {
             const id = e.currentTarget.dataset.id;
@@ -2136,7 +2282,6 @@ function renderJournal(container) {
                     lines[idx] = newText;
                     note.body = lines.join('\n');
                     saveData(d);
-                    showToast('Item updated.', 'success');
                 }
             }
         });
@@ -2164,7 +2309,6 @@ function renderJournal(container) {
                     saveData(d);
                     renderJournal(container);
 
-                    // Focus newly created item
                     setTimeout(() => {
                         const newEl = container.querySelector(`.journal-checklist-text[data-id="${id}"][data-idx="${idx + 1}"]`);
                         if (newEl) {
@@ -2203,7 +2347,6 @@ function renderJournal(container) {
                         saveData(d);
                         renderJournal(container);
 
-                        // Focus previous item
                         setTimeout(() => {
                             const prevIdx = idx > 0 ? idx - 1 : 0;
                             const prevEl = container.querySelector(`.journal-checklist-text[data-id="${id}"][data-idx="${prevIdx}"]`);
@@ -2223,6 +2366,7 @@ function renderJournal(container) {
         });
     });
 }
+
 
 // ======================== ACCESSIBILITY HELPERS & SPOTLIGHT/PALETTE ========================
 function announce(message) {
