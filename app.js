@@ -3219,12 +3219,10 @@ window.addEventListener('keydown', (e) => {
              document.activeElement.tagName === 'TEXTAREA' || 
              document.activeElement.isContentEditable)) {
             
-            // For new goal text, just abort the flow without clearing
+            // For any input/prompt, show an abort toast to confirm Escape was pressed
             if (document.activeElement.id === 'new-goal-text') {
                 showToast('Goal creation aborted.', 'info');
-            }
-            // For command/search, just abort the flow without clearing
-            if (document.activeElement.id === 'palette-search' || document.activeElement.id === 'gsearch-search') {
+            } else {
                 showToast('Command aborted.', 'info');
             }
             
