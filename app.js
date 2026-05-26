@@ -3223,10 +3223,12 @@ window.addEventListener('keydown', (e) => {
             // For new goal text, clear it completely to abort
             if (document.activeElement.id === 'new-goal-text') {
                 document.activeElement.value = '';
+                showToast('Goal creation aborted.', 'info');
             }
             // For command/search, clear them too
             if (document.activeElement.id === 'palette-search' || document.activeElement.id === 'gsearch-search') {
                 document.activeElement.value = '';
+                showToast('Command aborted.', 'info');
             }
             
             document.activeElement.blur();
