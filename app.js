@@ -3195,6 +3195,23 @@ window.addEventListener('keydown', (e) => {
         return;
     }
     if (e.key === 'Escape') {
+        if (document.activeElement && 
+            (document.activeElement.tagName === 'INPUT' || 
+             document.activeElement.tagName === 'TEXTAREA' || 
+             document.activeElement.isContentEditable)) {
+            
+            // For new goal text, clear it completely to abort
+            if (document.activeElement.id === 'new-goal-text') {
+                document.activeElement.value = '';
+            }
+            // For command/search, clear them too
+            if (document.activeElement.id === 'palette-search' || document.activeElement.id === 'gsearch-search') {
+                document.activeElement.value = '';
+            }
+            
+            document.activeElement.blur();
+        }
+
         document.getElementById('shortcuts-modal').style.display = 'none';
         document.getElementById('command-palette-modal').style.display = 'none';
         document.getElementById('global-search-modal').style.display = 'none';
