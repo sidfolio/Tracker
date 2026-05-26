@@ -660,6 +660,10 @@ function renderDashboard(container) {
         if (e.key === 'Enter') {
             e.preventDefault();
             document.getElementById('add-goal-btn').click();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            e.target.value = '';
+            e.target.blur();
         }
     });
 
