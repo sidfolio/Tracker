@@ -662,6 +662,21 @@ function renderDashboard(container) {
             document.getElementById('add-goal-btn').click();
         }
     });
+
+    document.getElementById('new-goal-text').addEventListener('input', (e) => {
+        const val = e.target.value;
+        const lowerVal = val.toLowerCase();
+        if (lowerVal === 'd ' || lowerVal === 'd:') {
+            document.getElementById('new-goal-type').value = 'daily';
+            e.target.value = '';
+        } else if (lowerVal === 'w ' || lowerVal === 'w:') {
+            document.getElementById('new-goal-type').value = 'weekly';
+            e.target.value = '';
+        } else if (lowerVal === 'm ' || lowerVal === 'm:') {
+            document.getElementById('new-goal-type').value = 'monthly';
+            e.target.value = '';
+        }
+    });
 }
 
 function renderGoalLists() {
@@ -3328,6 +3343,22 @@ window.addEventListener('keydown', (e) => {
             } else {
                 modal.style.display = 'none';
             }
+        }
+        return;
+    }
+
+    if (e.ctrlKey && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        const currentHash = window.location.hash.replace('#', '') || 'dashboard';
+        if (currentHash !== 'dashboard') {
+            window.location.hash = '#dashboard';
+            setTimeout(() => {
+                const addIn = document.getElementById('new-goal-text');
+                if (addIn) addIn.focus();
+            }, 100);
+        } else {
+            const addIn = document.getElementById('new-goal-text');
+            if (addIn) addIn.focus();
         }
         return;
     }
