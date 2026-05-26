@@ -662,7 +662,6 @@ function renderDashboard(container) {
             document.getElementById('add-goal-btn').click();
         } else if (e.key === 'Escape') {
             e.preventDefault();
-            e.target.value = '';
             e.target.blur();
         } else if (e.key === 'ArrowLeft' && e.ctrlKey) {
             e.preventDefault();
@@ -3220,14 +3219,12 @@ window.addEventListener('keydown', (e) => {
              document.activeElement.tagName === 'TEXTAREA' || 
              document.activeElement.isContentEditable)) {
             
-            // For new goal text, clear it completely to abort
+            // For new goal text, just abort the flow without clearing
             if (document.activeElement.id === 'new-goal-text') {
-                document.activeElement.value = '';
                 showToast('Goal creation aborted.', 'info');
             }
-            // For command/search, clear them too
+            // For command/search, just abort the flow without clearing
             if (document.activeElement.id === 'palette-search' || document.activeElement.id === 'gsearch-search') {
-                document.activeElement.value = '';
                 showToast('Command aborted.', 'info');
             }
             
