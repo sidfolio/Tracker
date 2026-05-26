@@ -664,6 +664,26 @@ function renderDashboard(container) {
             e.preventDefault();
             e.target.value = '';
             e.target.blur();
+        } else if (e.key === 'ArrowLeft' && e.target.selectionStart === 0) {
+            e.preventDefault();
+            document.getElementById('new-goal-type').focus();
+        } else if (e.key === 'ArrowRight' && e.target.selectionEnd === e.target.value.length) {
+            e.preventDefault();
+            document.getElementById('add-goal-btn').focus();
+        }
+    });
+
+    document.getElementById('new-goal-type').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            document.getElementById('new-goal-text').focus();
+        }
+    });
+
+    document.getElementById('add-goal-btn').addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            document.getElementById('new-goal-text').focus();
         }
     });
 
