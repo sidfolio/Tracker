@@ -3309,12 +3309,28 @@ window.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.key.toLowerCase() === 'g') {
+    if (e.ctrlKey && e.key.toLowerCase() === 'g') {
+        e.preventDefault();
+        const currentHash = window.location.hash.replace('#', '') || 'dashboard';
+        if (currentHash !== 'dashboard') {
+            window.location.hash = '#dashboard';
+            setTimeout(() => {
+                const addIn = document.getElementById('new-goal-text');
+                if (addIn) addIn.focus();
+            }, 100);
+        } else {
+            const addIn = document.getElementById('new-goal-text');
+            if (addIn) addIn.focus();
+        }
+        return;
+    }
+
+    if (e.key.toLowerCase() === 'g' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         window.location.hash = '#dashboard';
         return;
     }
-    if (e.key.toLowerCase() === 'c') {
+    if (e.key.toLowerCase() === 'c' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         window.location.hash = '#contacts';
         return;
@@ -3334,7 +3350,7 @@ window.addEventListener('keydown', (e) => {
         }
     }
 
-    if (e.key.toLowerCase() === 'z') {
+    if (e.key.toLowerCase() === 'z' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         const modal = document.getElementById('zone-modal');
         if (modal) {
@@ -3343,22 +3359,6 @@ window.addEventListener('keydown', (e) => {
             } else {
                 modal.style.display = 'none';
             }
-        }
-        return;
-    }
-
-    if (e.ctrlKey && e.key.toLowerCase() === 'g') {
-        e.preventDefault();
-        const currentHash = window.location.hash.replace('#', '') || 'dashboard';
-        if (currentHash !== 'dashboard') {
-            window.location.hash = '#dashboard';
-            setTimeout(() => {
-                const addIn = document.getElementById('new-goal-text');
-                if (addIn) addIn.focus();
-            }, 100);
-        } else {
-            const addIn = document.getElementById('new-goal-text');
-            if (addIn) addIn.focus();
         }
         return;
     }
